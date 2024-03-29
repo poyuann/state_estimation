@@ -88,12 +88,12 @@ std::vector<Eigen::Vector4d> GT_measurement::lidarMeasure(std::vector<MAV_eigen>
 	Eigen::Vector4d measurement;
 	std::vector<Eigen::Vector4d> measurements;
 	Eigen::Vector3d r_ns_B;
-	Eigen::Matrix3d R_W2B_i = formation_GT[self_index].R_w2b.inverse();
+	Eigen::Matrix3d R_W2B = formation_GT[self_index].R_w2b;
 	for(int i=0; i<formation_num; i++)
 	{
 		if(i != self_index)
 		{
-			r_ns_B = R_W2B_i*(formation_GT[i].r - formation_GT[self_index].r);
+			r_ns_B = R_W2B*(formation_GT[i].r - formation_GT[self_index].r);
 
 			measurement(0) = sqrt(pow(r_ns_B(0), 2) + pow(r_ns_B(1), 2) + pow(r_ns_B(2), 2));
 			measurement(1) = acos(r_ns_B(2)/measurement(0)); // theta

@@ -30,7 +30,7 @@
                 <param name="pos_est" value="false"/>
 +
                 <node name="synchronizer" pkg="state_estimation" type="self_msg_sync"></node>
-                <node name="state_estimation" pkg="state_estimation" type="state_estimation" output="screen"></node>
+                <node name="state_estimation" pkg="state_estimation" type="state_estimation" ></node>
         </group>
         <group ns="$(arg vehicle)_3">
                 <param name="ID" value="3" />
@@ -42,6 +42,6 @@
                 <param name="pos_est" value="false"/>
 
                 <node name="synchronizer" pkg="state_estimation" type="self_msg_sync" ></node>
-                <node name="state_estimation" pkg="state_estimation" type="state_estimation"></node>
+                <node name="state_estimation" pkg="state_estimation" type="state_estimation" output="screen"></node>
         </group>
 </launch>

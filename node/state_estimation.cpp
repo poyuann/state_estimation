@@ -171,8 +171,8 @@ int main(int argc, char **argv)
 		sheif.process();
 		SEIF_pose.setFusionPairs(sheif.getFusedCov(), sheif.getFusedState());
 		
-		// std::cout << "SEIF:\n";
-		// eif_ros.selfState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[ID], sheif.getFusedState()));
+		std::cout << "SEIF:\n";
+		eif_ros.selfState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[ID], sheif.getFusedState()));
 		
 		// -------------------------------------Target-------------------------------------
 		std::vector<EIF_data> allTgtEIFData;

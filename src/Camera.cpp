@@ -63,7 +63,6 @@ void Camera::jointState_cb(const sensor_msgs::JointState::ConstPtr& msg)
             0, 1, 0,
             sin(pitch), 0, cos(pitch);
 
-    // R_b2c = R_t2c*R_p2t*R_m2p*R_b2m;
     R_b2c = R_t2c*R_p2t*R_m2p*R_b2m;
 }
 

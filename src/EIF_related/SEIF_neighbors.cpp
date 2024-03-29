@@ -40,8 +40,8 @@ EIF_data Self_rel_EIF::computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor_pr
     if(checkPreMeasurement(LM))
     {
         Eigen::MatrixXd R_hat;
-        Eigen::Matrix3d R_W2B_i = Mav_eigen_self.R_w2b.inverse();
-        Eigen::Vector3d r_B_hat = R_W2B_i*(neighbor_pred.X_hat.segment(0, 3) - self.X_hat.segment(0, 3));
+        Eigen::Matrix3d R_W2B = Mav_eigen_self.R_w2b;
+        Eigen::Vector3d r_B_hat = R_W2B*(neighbor_pred.X_hat.segment(0, 3) - self.X_hat.segment(0, 3));
         
         double D = sqrt(pow(r_B_hat(0), 2) + pow(r_B_hat(1), 2) + pow(r_B_hat(2), 2));
         
@@ -53,26 +53,26 @@ EIF_data Self_rel_EIF::computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor_pr
         
         neighbor_pred.H.setZero(self_measurement_size, self_state_size);
 
-        neighbor_pred.H(0, 0) = (R_W2B_i(0, 0)*r_B_hat(0) + R_W2B_i(1, 0)*r_B_hat(1) + R_W2B_i(2, 0)*r_B_hat(2)) / D;
-        neighbor_pred.H(0, 1) = (R_W2B_i(0, 1)*r_B_hat(0) + R_W2B_i(1, 1)*r_B_hat(1) + R_W2B_i(2, 1)*r_B_hat(2)) / D;
-        neighbor_pred.H(0, 2) = (R_W2B_i(0, 2)*r_B_hat(0) + R_W2B_i(1, 2)*r_B_hat(1) + R_W2B_i(2, 2)*r_B_hat(2)) / D;
+        neighbor_pred.H(0, 0) = (R_W2B(0, 0)*r_B_hat(0) + R_W2B(1, 0)*r_B_hat(1) + R_W2B(2, 0)*r_B_hat(2)) / D;
+        neighbor_pred.H(0, 1) = (R_W2B(0, 1)*r_B_hat(0) + R_W2B(1, 1)*r_B_hat(1) + R_W2B(2, 1)*r_B_hat(2)) / D;
+        neighbor_pred.H(0, 2) = (R_W2B(0, 2)*r_B_hat(0) + R_W2B(1, 2)*r_B_hat(1) + R_W2B(2, 2)*r_B_hat(2)) / D;
         
-        neighbor_pred.H(1, 0) = (R_W2B_i(0, 0)*r_B_hat(0)*r_B_hat(2)
-                                + R_W2B_i(1, 0)*r_B_hat(1)*r_B_hat(2)
-                                - R_W2B_i(2, 0)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
+        neighbor_pred.H(1, 0) = (R_W2B(0, 0)*r_B_hat(0)*r_B_hat(2)
+                                + R_W2B(1, 0)*r_B_hat(1)*r_B_hat(2)
+                                - R_W2B(2, 0)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
                                 /(D*D * sqrt(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)));
-        neighbor_pred.H(1, 1) = (R_W2B_i(0, 1)*r_B_hat(0)*r_B_hat(2)
-                                + R_W2B_i(1, 1)*r_B_hat(1)*r_B_hat(2)
-                                - R_W2B_i(2, 1)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
+        neighbor_pred.H(1, 1) = (R_W2B(0, 1)*r_B_hat(0)*r_B_hat(2)
+                                + R_W2B(1, 1)*r_B_hat(1)*r_B_hat(2)
+                                - R_W2B(2, 1)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
                                 /(D*D * sqrt(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)));
-        neighbor_pred.H(1, 2) = (R_W2B_i(0, 2)*r_B_hat(0)*r_B_hat(2)
-                                + R_W2B_i(1, 2)*r_B_hat(1)*r_B_hat(2)
-                                - R_W2B_i(2, 2)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
+        neighbor_pred.H(1, 2) = (R_W2B(0, 2)*r_B_hat(0)*r_B_hat(2)
+                                + R_W2B(1, 2)*r_B_hat(1)*r_B_hat(2)
+                                - R_W2B(2, 2)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
                                 /(D*D * sqrt(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)));
 
-        neighbor_pred.H(2, 0) = (-R_W2B_i(0, 0)*r_B_hat(1) + R_W2B_i(1, 0)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
-        neighbor_pred.H(2, 1) = (-R_W2B_i(0, 1)*r_B_hat(1) + R_W2B_i(1, 1)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
-        neighbor_pred.H(2, 2) = (-R_W2B_i(0, 2)*r_B_hat(1) + R_W2B_i(1, 2)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
+        neighbor_pred.H(2, 0) = (-R_W2B(0, 0)*r_B_hat(1) + R_W2B(1, 0)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
+        neighbor_pred.H(2, 1) = (-R_W2B(0, 1)*r_B_hat(1) + R_W2B(1, 1)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
+        neighbor_pred.H(2, 2) = (-R_W2B(0, 2)*r_B_hat(1) + R_W2B(1, 2)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
 
         ////////////////////////////////////////////////// derivative w.r.t self //////////////////////////////////////////////////
         self.H = -neighbor_pred.H;
