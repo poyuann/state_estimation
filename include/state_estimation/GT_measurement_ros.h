@@ -34,12 +34,14 @@ private:
         Lidar, position
     ===============================================================================================================================*/
     std::vector<Eigen::Vector4d> lidarMeasurements;
+    Eigen::Vector3d lidar4target;
 	Eigen::Vector3d positionMeasurement;
 
     int lidar_rate;
     int position_rate;
 
     std::vector<Eigen::Vector4d> lidarMeasure(std::vector<MAV_eigen> GTs_eigen, std::default_random_engine generator);
+    Eigen::Vector3d lidarmeasure4target(std::vector<MAV_eigen> formation_eigen_GT, MAV_eigen GTs_eigen, std::default_random_engine generator);
     Eigen::Vector3d positionMeasure(MAV_eigen GT_eigen, std::default_random_engine generator);
     /*=================================================================================================================================
         Camera boundingBox
@@ -68,6 +70,7 @@ public:
         Lidar, position
     =================================================================================================================================*/
     std::vector<Eigen::Vector4d> getLidarMeasurements();
+    Eigen::Vector3d getlidar4target();
     Eigen::Vector3d getPositionMeasurement();
 
     /*=================================================================================================================================

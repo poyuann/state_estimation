@@ -46,6 +46,7 @@ public:
     MAV();
     MAV(ros::NodeHandle &nh);
     MAV(ros::NodeHandle &nh, string vehicle, int ID);
+    MAV(ros::NodeHandle &nh, string vehicle, int ID,int empty);
     void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
     void vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr& msg);

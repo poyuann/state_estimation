@@ -68,7 +68,10 @@ void GT_measurement::groundTruth_cb(const gazebo_msgs::ModelStates::ConstPtr& ms
 	////////////////////////// Transform from groundtruth to measurements,  ////////////////////////
 	static std::default_random_engine generator;
 	if(GTs_count % (GTs_rate/lidar_rate) == 0) // lidar_rate = 10hz means that we do a measurement evry 50 count 
+	{
 		lidarMeasurements = lidarMeasure(formation_eigen_GT, generator);
+		lidar4target = lidarmeasure4target(formation_eigen_GT,GTs_eigen[0], generator);
+	}
 	if(GTs_count % (GTs_rate/position_rate) == 0) // position_rate = 10hz means that we do a measurement evry 50 count 
 		positionMeasurement = positionMeasure(GTs_eigen[ID], generator);
 	if(GTs_count == GTs_rate)
@@ -112,7 +115,27 @@ std::vector<Eigen::Vector4d> GT_measurement::lidarMeasure(std::vector<MAV_eigen>
 	}
 	return measurements;
 }
+Eigen::Vector3d GT_measurement::lidarmeasure4target(std::vector<MAV_eigen> formation_GT,MAV_eigen GTs_eigen, std::default_random_engine generator)
+{
+	Eigen::Vector3d measurement;
+	Eigen::Vector3d r_ns_B;
+	Eigen::Matrix3d R_W2B = formation_GT[self_index].R_w2b;
 
+			r_ns_B = R_W2B*(GTs_eigen.r - formation_GT[self_index].r);
+
+			measurement(0) = sqrt(pow(r_ns_B(0), 2) + pow(r_ns_B(1), 2) + pow(r_ns_B(2), 2));
+			measurement(1) = acos(r_ns_B(2)/measurement(0)); // theta
+			measurement(2) = atan2(r_ns_B(1), r_ns_B(0)); // phi
+
+			std::normal_distribution<double> n_D(0.0, 0.01);
+			std::normal_distribution<double> n_theta(0.0, 0.035);
+			std::normal_distribution<double> n_phi(0.0, 0.035);
+			measurement(0) += n_D(generator);
+			measurement(1) += n_theta(generator);
+			measurement(2) += n_phi(generator);		
+		
+	return measurement;
+}
 Eigen::Vector3d GT_measurement::positionMeasure(MAV_eigen GT_eigen, std::default_random_engine generator)
 {
 	Eigen::Vector3d measurement = GT_eigen.r;
@@ -128,6 +151,7 @@ Eigen::Vector3d GT_measurement::positionMeasure(MAV_eigen GT_eigen, std::default
 }
 
 std::vector<Eigen::Vector4d> GT_measurement::getLidarMeasurements(){return lidarMeasurements;}
+Eigen::Vector3d GT_measurement::getlidar4target(){return  lidar4target;}
 Eigen::Vector3d GT_measurement::getPositionMeasurement(){return positionMeasurement;}
 
 /*=================================================================================================================================

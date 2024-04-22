@@ -1,7 +1,6 @@
 #include "Mav.h"
 
 MAV::MAV(){}
-
 MAV::MAV(ros::NodeHandle &nh_)
 {
     nh = nh_;
@@ -11,7 +10,6 @@ MAV::MAV(ros::NodeHandle &nh_)
     imu_sub = nh_.subscribe<sensor_msgs::Imu>("mavros/imu/data", 10, &MAV::imu_cb, this);
     mav_state_sub = nh_.subscribe<mavros_msgs::State>("mavros/state", 10, &MAV::mav_state_cb, this);
 }
-
 MAV::MAV(ros::NodeHandle &nh_, string vehicle, int ID)
 {
     nh = nh_;
@@ -36,7 +34,30 @@ MAV::MAV(ros::NodeHandle &nh_, string vehicle, int ID)
     }
     mav_state_sub = nh_.subscribe<mavros_msgs::State>("mavros/state", 10, &MAV::mav_state_cb, this);
 }
+MAV::MAV(ros::NodeHandle &nh_, string vehicle, int ID, int empty)
+{
+    nh = nh_;
+    pose_init = vel_init = imu_init = false;
+    id = ID;
+    roll = pitch = yaw = 0;
+    topic_count = 0;
 
+    string prefix = string("/") + vehicle + string("_") + to_string(ID);
+    if(id != 0)
+    {   
+        pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>(prefix + string("/mavros/local_position/pose"), 10, &MAV::pose_cb, this);
+        vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>(prefix + string("/mavros/local_position/twist"), 10, &MAV::vel_cb, this);
+        imu_sub = nh_.subscribe<sensor_msgs::Imu>(prefix + string("/mavros/imu/data"), 10, &MAV::imu_cb, this);
+    }
+    else
+    {
+        // pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("/leader/formation/pose", 10, &MAV::pose_cb, this);
+        // vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>("/leader/formation/velocity", 10, &MAV::vel_cb, this);
+        pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("/target/mavros/local_position/pose", 10, &MAV::pose_cb, this);
+        vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>("/target/mavros/local_position/velocity_local", 10, &MAV::vel_cb, this);
+    }
+    mav_state_sub = nh_.subscribe<mavros_msgs::State>("mavros/state", 10, &MAV::mav_state_cb, this);
+}
 void MAV::mav_state_cb(const mavros_msgs::State::ConstPtr& msg) 
 {
     state = *msg;

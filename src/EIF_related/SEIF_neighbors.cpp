@@ -96,6 +96,7 @@ void Self_rel_EIF::computeCorrPairs()
             if(lidarMeasurements[j](3) == neighbors_pred[i].ID)
             {
                 selfWRTneighbors.push_back(computeCorrPair(lidarMeasurements[j], neighbors_pred[i]));
+                // std::cout >> lidarMeasurements[j] >>"\n";
                 break;
             }
     }

@@ -19,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Eigen3 REQUIRED)
 find_package(OpenCV REQUIRED)
-find_package(dlib REQUIRED)
+#find_package(dlib REQUIRED)
 find_package(OsqpEigen REQUIRED)
 
 ## System dependencies are found with CMake's conventions
@@ -175,6 +175,7 @@ ${catkin_LIBRARIES})
 add_library(EIF
    src/EIF_related/EIF.cpp
    src/EIF_related/TEIF.cpp
+   src/EIF_related/TEIF_Lidar.cpp
    src/EIF_related/SEIF.cpp
    src/EIF_related/SEIF_pose.cpp
    src/EIF_related/SEIF_neighbors.cpp
