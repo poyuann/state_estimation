@@ -105,7 +105,7 @@ def plot_target_position_3D(GT_posest, est_posest):
 
     # Plotting
     ax.plot(GT_xt, GT_yt, GT_zt, label='GT Pose target')
-    ax.plot(est_xt, est_yt, est_zt, linestyle=':', label='Est Pose target')
+    ax.plot(est_xt, est_yt, est_zt, linestyle='-', label='Est Pose target')
 
     ax.set_xlabel('X-axis')
     ax.set_ylabel('Y-axis')
@@ -113,35 +113,36 @@ def plot_target_position_3D(GT_posest, est_posest):
     ax.legend()
 
     plt.title('Combined 3D Poses')
+    plt.savefig('target_position.png')
     plt.show()
 
 def plotFromBag(bag, name):
     E_x = []
     E_y = []
     E_z = []
-    # timestamps1, EIF_1_GTpose, EIF_1_Estpose, EIF_1_RMSE_p, EIF_1_RMSE_v = extract_data(bag, '/iris_1/SHEIF/Plot')
-    # timestamps2, EIF_2_GTpose, EIF_2_Estpose, EIF_2_RMSE_p, EIF_2_RMSE_v = extract_data(bag, '/iris_2/SHEIF/Plot')
-    # timestamps3, EIF_3_GTpose, EIF_3_Estpose, EIF_3_RMSE_p, EIF_3_RMSE_v = extract_data(bag, '/iris_3/SHEIF/Plot')
+    timestamps1, EIF_1_GTpose, EIF_1_Estpose, EIF_1_RMSE_p, EIF_1_RMSE_v = extract_data(bag, '/iris_1/SHEIF/Plot')
+    timestamps2, EIF_2_GTpose, EIF_2_Estpose, EIF_2_RMSE_p, EIF_2_RMSE_v = extract_data(bag, '/iris_2/SHEIF/Plot')
+    timestamps3, EIF_3_GTpose, EIF_3_Estpose, EIF_3_RMSE_p, EIF_3_RMSE_v = extract_data(bag, '/iris_3/SHEIF/Plot')
     timestampst, EIF_t_GTpose, EIF_t_Estpose, EIF_t_RMSE_p, EIF_t_RMSE_v = extract_data(bag, '/iris_1/THEIF/Plot')
     # for (GTpose, Estpose) in zip(EIF_1_GTpose, EIF_1_Estpose):
-    #     E_x.append(abs(GTpose.position.x - Estpose.position.x))
-    #     E_y.append(abs(GTpose.position.y - Estpose.position.y))
-    #     E_z.append(abs(GTpose.position.z - Estpose.position.z))
+        # E_x.append(abs(GTpose.position.x - Estpose.position.x))
+        # E_y.append(abs(GTpose.position.y - Estpose.position.y))
+        # E_z.append(abs(GTpose.position.z - Estpose.position.z))
 
     bag.close()
     
-    # plot_combined_position_3D(EIF_1_GTpose, EIF_1_Estpose
-    #                            , EIF_2_GTpose, EIF_2_Estpose
-    #                            , EIF_3_GTpose, EIF_3_Estpose)
+    plot_combined_position_3D(EIF_1_GTpose, EIF_1_Estpose
+                               , EIF_2_GTpose, EIF_2_Estpose
+                               , EIF_3_GTpose, EIF_3_Estpose)
     
-    plot_target_position_3D(EIF_t_GTpose, EIF_t_Estpose)
+    # plot_target_position_3D(EIF_t_GTpose, EIF_t_Estpose)
 
-    # plot_RMSE_p(timestamps1, EIF_1_RMSE_p, "UAV1")
-    # plot_RMSE_v(timestamps1, EIF_1_RMSE_v, "UAV1")
-    # plot_RMSE_p(timestamps2, EIF_2_RMSE_p, "UAV2")
-    # plot_RMSE_v(timestamps2, EIF_2_RMSE_v, "UAV2")
-    # plot_RMSE_p(timestamps3, EIF_3_RMSE_p, "UAV3")
-    # plot_RMSE_v(timestamps3, EIF_3_RMSE_v, "UAV3")
+    plot_RMSE_p(timestamps1, EIF_1_RMSE_p, "iris_1")
+    plot_RMSE_v(timestamps1, EIF_1_RMSE_v, "iris_1")
+    plot_RMSE_p(timestamps2, EIF_2_RMSE_p, "iris_2")
+    plot_RMSE_v(timestamps2, EIF_2_RMSE_v, "iris_2")
+    plot_RMSE_p(timestamps3, EIF_3_RMSE_p, "iris_3")
+    plot_RMSE_v(timestamps3, EIF_3_RMSE_v, "iris_3")
     plot_RMSE_p(timestampst, EIF_t_RMSE_p, "target")
     plot_RMSE_v(timestampst, EIF_t_RMSE_v, "target")
     #plot_combined_RMSE_v(timestamps1, EIF_1_RMSE_v, EIF_2_RMSE_v, EIF_3_RMSE_v)
@@ -217,12 +218,12 @@ def plotFromTwoBags(file1, file2, topic, label1, label2):
     plot_combined_RMSE_p(RMSE_p1, label1, RMSE_p2, label2)
     plot_combined_RMSE_v(RMSE_v1, label1, RMSE_v2, label2)
 
-folder = '/home/ncrl/gazebo_sim_ws/src/state_estimation/bag/'
+folder = '/home/ncrl/eif_ws/src/state_estimation/bag/'
 
-file1 = folder + 'QP.bag'
-file2 = folder + 'noQP.bag'
+file1 = folder + 'lidar.bag'
+# file2 = folder + 'lidar.bag'
 bag1 = rosbag.Bag(file1)
-bag2 = rosbag.Bag(file2)
-topic = '/iris_1/THEIF/Plot'
-plotFromTwoBags(file1, file2, topic, 'QP prediction', 'no QP prediction')
-plotFromBag(bag2, 'THEIF, Only one neigbor robots has absolute position rate 5hz')
+# bag2 = rosbag.Bag(file2)
+topic = '/iris_1/SHEIF/Plot'
+# plotFromTwoBags(file1, file2, topic, 'QP prediction', 'no QP prediction')
+plotFromBag(bag1, 'THEIF, Only one neigbor robots has absolute position rate 5hz')

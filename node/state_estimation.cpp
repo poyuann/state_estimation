@@ -202,7 +202,7 @@ int main(int argc, char **argv)
 		// }
 
 		std::cout << "TEIF:\n";
-		(compare(gt_m.getGTs_eigen()[0], theif.getFusedState()));
+		eif_ros.tgtState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[0], theif.getFusedState()));
 		
 		
 		/*=================================================================================================================================

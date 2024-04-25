@@ -19,7 +19,7 @@ GT_measurement::GT_measurement(ros::NodeHandle& nh_, int id, int mavnum)
 	/*=================================================================================================================================
         Lidar, position
     ===============================================================================================================================*/
-	lidar_rate = 10;
+	lidar_rate = 50;
 	position_rate = 10;
 
 	/*=================================================================================================================================
@@ -104,8 +104,8 @@ std::vector<Eigen::Vector4d> GT_measurement::lidarMeasure(std::vector<MAV_eigen>
 			measurement(3) = i+1; // ID
 
 			std::normal_distribution<double> n_D(0.0, 0.02);
-			std::normal_distribution<double> n_theta(0.0, 0.035);
-			std::normal_distribution<double> n_phi(0.0, 0.035);
+			std::normal_distribution<double> n_theta(0.0, 0.01);
+			std::normal_distribution<double> n_phi(0.0, 0.01);
 			measurement(0) += n_D(generator);
 			measurement(1) += n_theta(generator);
 			measurement(2) += n_phi(generator);
@@ -127,7 +127,7 @@ Eigen::Vector3d GT_measurement::lidarmeasure4target(std::vector<MAV_eigen> forma
 			measurement(1) = acos(r_ns_B(2)/measurement(0)); // theta
 			measurement(2) = atan2(r_ns_B(1), r_ns_B(0)); // phi
 
-			std::normal_distribution<double> n_D(0.0, 0.01);
+			std::normal_distribution<double> n_D(0.0, 0.02);
 			std::normal_distribution<double> n_theta(0.0, 0.035);
 			std::normal_distribution<double> n_phi(0.0, 0.035);
 			measurement(0) += n_D(generator);

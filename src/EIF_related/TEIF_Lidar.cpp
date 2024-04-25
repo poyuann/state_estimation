@@ -34,7 +34,7 @@ void target_EIF_lidar::setMeasurement(Eigen::Vector3d LM){lidarMeasurements = LM
 void target_EIF_lidar::setSEIFpredData(EIF_data self_data)
 {
 	self = self_data;
-	// self.X_hat.segment(0, 3) = self.X_hat.segment(0, 3) + Mav_eigen_self.R_w2b*cam.t_B2C(); ///???????????????????
+	// self.X_hat.segment(0, 3) = self.X_hat.segment(0, 3) + Mav_eigen_self.R_w2b*cam.t_B2C(); ///camera offset
 }
 
 void target_EIF_lidar::computePredPairs(double delta_t)
@@ -43,8 +43,8 @@ void target_EIF_lidar::computePredPairs(double delta_t)
 	
 	///////////////////////////// X, F ////////////////////////////////
 
-	T.X_hat.segment(0, 3) = T.X.segment(0, 3) + T.X.segment(3, 3)*dt + 1/2*u*dt*dt;
-	T.X_hat.segment(3, 3) = T.X.segment(3, 3) + u*dt;
+	T.X_hat.segment(0, 3) = T.X.segment(0, 3) + T.X.segment(3, 3)*dt;// + 1/2*u*dt*dt;
+	T.X_hat.segment(3, 3) = T.X.segment(3, 3) ;//+ u*dt;
 
 	T.F.setIdentity();
 
