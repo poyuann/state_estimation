@@ -8,9 +8,9 @@ Self_rel_EIF::Self_rel_EIF()
     
     //////////////////////// Covariance Tuning ////////////////////////
 
-    R(0, 0) = 1e-2;
-    R(1, 1) = 2e-1;
-    R(2, 2) = 2e-1;
+    R(0, 0) = 4e-4;
+    R(1, 1) = 1e-3;
+    R(2, 2) = 1e-3;
 }
 Self_rel_EIF::~Self_rel_EIF(){}
 

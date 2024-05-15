@@ -104,8 +104,8 @@ std::vector<Eigen::Vector4d> GT_measurement::lidarMeasure(std::vector<MAV_eigen>
 			measurement(3) = i+1; // ID
 
 			std::normal_distribution<double> n_D(0.0, 0.02);
-			std::normal_distribution<double> n_theta(0.0, 0.01);
-			std::normal_distribution<double> n_phi(0.0, 0.01);
+			std::normal_distribution<double> n_theta(0.0, 0.035);
+			std::normal_distribution<double> n_phi(0.0, 0.035);
 			measurement(0) += n_D(generator);
 			measurement(1) += n_theta(generator);
 			measurement(2) += n_phi(generator);

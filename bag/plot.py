@@ -1,13 +1,13 @@
 import rosbag
 import matplotlib.pyplot as plt
-
+import numpy as np
 def extract_data(bag, topics):
     timestamps = []
     RMSE_p = []
     RMSE_v = []
     GT_poses = []
     est_poses = []
-
+    det_p= []
     for topic, msg, t in bag.read_messages(topics):
     # Extract relevant data from the message
         timestamps.append(msg.header.stamp.to_sec())
@@ -15,8 +15,8 @@ def extract_data(bag, topics):
         RMSE_v.append(msg.RMSE_v)
         GT_poses.append(msg.GT_pose)
         est_poses.append(msg.est_pose)
-
-    return timestamps, GT_poses, est_poses, RMSE_p, RMSE_v
+        det_p.append(msg.det_p)
+    return timestamps, GT_poses, est_poses, RMSE_p, RMSE_v, det_p
 
 def plot_RMSE_p(timeStamps, RMSE_p, dataset_label):
     plt.figure(figsize=(10, 6))
@@ -43,8 +43,18 @@ def plot_RMSE_v(timeStamps, RMSE_v, dataset_label):
     plt.legend()
     plt.grid(True)
     plt.show()
-
-
+def plot_det_p(timeStamps, det_p, dataset_label):
+    plt.figure(figsize = (10,6))
+    average = sum(det_p)/len(det_p)
+    plt.plot(timeStamps, det_p, label=f'det p for {dataset_label}',color='orange')
+    plt.axhline(y=average, color='r', linestyle='--',label=f'Average det_p: {average:3f}')
+    plt.text(timeStamps[int(len(timeStamps)/ 10)], average, f'Average : {average:.3f}', color='red')
+    plt.xlabel('Time (seconds)')
+    plt.ylabel('')
+    plt.title(f'det p for {dataset_label}')
+    plt.legend()
+    plt.grid(True)
+    plt.show()
 def plot_combined_position_3D(GT_poses1, est_poses1,
                                GT_poses2, est_poses2,
                                 GT_poses3, est_poses3):
@@ -77,11 +87,11 @@ def plot_combined_position_3D(GT_poses1, est_poses1,
 
     # Plotting
     ax.plot(GT_x1, GT_y1, GT_z1, label='GT Pose 1')
-    ax.plot(est_x1, est_y1, est_z1, linestyle=':', label='Est Pose 1')
+    ax.scatter(est_x1, est_y1, est_z1,  marker = 'o', label='Est Pose 1')
     ax.plot(GT_x2, GT_y2, GT_z2, label='GT Pose 2')
-    ax.plot(est_x2, est_y2, est_z2, linestyle=':', label='Est Pose 2')
+    ax.scatter(est_x2, est_y2, est_z2,  marker = 'o', label='Est Pose 2')
     ax.plot(GT_x3, GT_y3, GT_z3, label='GT Pose 3')
-    ax.plot(est_x3, est_y3, est_z3, linestyle=':', label='Est Pose 3')
+    ax.scatter(est_x3, est_y3, est_z3,  marker = 'o', label='Est Pose 3')
 
     ax.set_xlabel('X-axis')
     ax.set_ylabel('Y-axis')
@@ -105,37 +115,109 @@ def plot_target_position_3D(GT_posest, est_posest):
 
     # Plotting
     ax.plot(GT_xt, GT_yt, GT_zt, label='GT Pose target')
-    ax.plot(est_xt, est_yt, est_zt, linestyle='-', label='Est Pose target')
+    ax.scatter(est_xt, est_yt, est_zt, c = 'g', marker = 'o', label='EST Pose t')
 
     ax.set_xlabel('X-axis')
     ax.set_ylabel('Y-axis')
     ax.set_zlabel('Z-axis')
     ax.legend()
 
-    plt.title('Combined 3D Poses')
-    plt.savefig('target_position.png')
+    plt.title('target 3D Poses')
+    # plt.savefig('target_position.png')
     plt.show()
+def ploterror3D(GT_poses1, est_poses1,
+                GT_poses2, est_poses2,
+                GT_poses3, est_poses3,
+                GT_posest, est_posest,
+                new_bool):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
+    # First set of poses
+    GT_x1 = np.array([pose.position.x for pose in GT_poses1])
+    GT_y1 = np.array([pose.position.y for pose in GT_poses1])
+    GT_z1 = np.array([pose.position.z for pose in GT_poses1])
+    est_x1 = np.array([pose.position.x for pose in est_poses1])
+    est_y1 = np.array([pose.position.y for pose in est_poses1])
+    est_z1 = np.array([pose.position.z for pose in est_poses1])
+
+    # Second set of poses
+    GT_x2 = np.array([pose.position.x for pose in GT_poses2])
+    GT_y2 = np.array([pose.position.y for pose in GT_poses2])
+    GT_z2 = np.array([pose.position.z for pose in GT_poses2])
+    est_x2 = np.array([pose.position.x for pose in est_poses2])
+    est_y2 = np.array([pose.position.y for pose in est_poses2])
+    est_z2 = np.array([pose.position.z for pose in est_poses2])
+
+    # Third set of poses
+    GT_x3 = np.array([pose.position.x for pose in GT_poses3])
+    GT_y3 = np.array([pose.position.y for pose in GT_poses3])
+    GT_z3 = np.array([pose.position.z for pose in GT_poses3])
+    est_x3 = np.array([pose.position.x for pose in est_poses3])
+    est_y3 = np.array([pose.position.y for pose in est_poses3])
+    est_z3 = np.array([pose.position.z for pose in est_poses3])
+
+    #target
+    GT_xt = np.array([pose.position.x for pose in GT_posest])
+    GT_yt = np.array([pose.position.y for pose in GT_posest])
+    GT_zt = np.array([pose.position.z for pose in GT_posest])
+    est_xt = np.array([pose.position.x for pose in est_posest])
+    est_yt = np.array([pose.position.y for pose in est_posest])
+    est_zt = np.array([pose.position.z for pose in est_posest])    
+    # Plotting
+    ax.scatter(GT_x1[new_bool], GT_y1[new_bool], GT_z1[new_bool],c = 'r', s = 5, label='GT Pose 1')
+    # ax.scatter(est_x1[new_bool], est_y1[new_bool], est_z1[new_bool], c = 'b', s = 5,  label='Est Pose 1')
+    ax.scatter(GT_xt[new_bool], GT_yt[new_bool], GT_zt[new_bool],c = 'b', marker = '^', label='GT Pose t')
+    ax.scatter(est_xt[new_bool], est_yt[new_bool], est_zt[new_bool],c = 'g', marker = '^', label='EST Pose t')
+    ax.scatter(GT_x2[new_bool], GT_y2[new_bool], GT_z2[new_bool], c = 'y', s = 5, label='GT Pose 2')
+
+    print(len(new_bool))
+    # new_bool = np.append(new_bool, False)
+    print(len(new_bool))
+
+    # ax.scatter(est_x2[new_bool], est_y2[new_bool], est_z2[new_bool], c = 'r', s = 5, label='Est Pose 2')
+    ax.scatter(GT_x3[new_bool], GT_y3[new_bool], GT_z3[new_bool], c = 'b', s = 5, label='GT Pose 3')
+    # ax.scatter(est_x3[new_bool], est_y3[new_bool], est_z3[new_bool], c = 'r', s = 5 , label='Est Pose 3')
+
+
+    ax.set_xlabel('X-axis')
+    ax.set_ylabel('Y-axis')
+    ax.set_zlabel('Z-axis')
+    ax.legend()
+
+    plt.title('error 3D Poses')
+    plt.show()    
 def plotFromBag(bag, name):
     E_x = []
     E_y = []
     E_z = []
-    timestamps1, EIF_1_GTpose, EIF_1_Estpose, EIF_1_RMSE_p, EIF_1_RMSE_v = extract_data(bag, '/iris_1/SHEIF/Plot')
-    timestamps2, EIF_2_GTpose, EIF_2_Estpose, EIF_2_RMSE_p, EIF_2_RMSE_v = extract_data(bag, '/iris_2/SHEIF/Plot')
-    timestamps3, EIF_3_GTpose, EIF_3_Estpose, EIF_3_RMSE_p, EIF_3_RMSE_v = extract_data(bag, '/iris_3/SHEIF/Plot')
-    timestampst, EIF_t_GTpose, EIF_t_Estpose, EIF_t_RMSE_p, EIF_t_RMSE_v = extract_data(bag, '/iris_1/THEIF/Plot')
+    timestamps1, EIF_1_GTpose, EIF_1_Estpose, EIF_1_RMSE_p, EIF_1_RMSE_v , _ = extract_data(bag, '/iris_1/SHEIF/Plot')
+    timestamps2, EIF_2_GTpose, EIF_2_Estpose, EIF_2_RMSE_p, EIF_2_RMSE_v , _ = extract_data(bag, '/iris_2/SHEIF/Plot')
+    timestamps3, EIF_3_GTpose, EIF_3_Estpose, EIF_3_RMSE_p, EIF_3_RMSE_v , _ = extract_data(bag, '/iris_3/SHEIF/Plot')
+    timestampst, EIF_t_GTpose, EIF_t_Estpose, EIF_t_RMSE_p, EIF_t_RMSE_v , EIF_t_det_p = extract_data(bag, '/iris_1/THEIF/Plot')
     # for (GTpose, Estpose) in zip(EIF_1_GTpose, EIF_1_Estpose):
         # E_x.append(abs(GTpose.position.x - Estpose.position.x))
         # E_y.append(abs(GTpose.position.y - Estpose.position.y))
         # E_z.append(abs(GTpose.position.z - Estpose.position.z))
 
     bag.close()
+    # for(i >5 for i in EIF_t_RMSE_p )
+    new = np.array(EIF_t_RMSE_p)
+    new_bool = np.array(new > 0.4, dtype = 'bool')
+    # print(new[new_bool])
+
+    
+    # ploterror3D(EIF_1_GTpose, EIF_1_Estpose
+    #             , EIF_2_GTpose, EIF_2_Estpose
+    #             , EIF_3_GTpose, EIF_3_Estpose
+    #             , EIF_t_GTpose, EIF_t_Estpose
+    #             , new_bool)
     
     plot_combined_position_3D(EIF_1_GTpose, EIF_1_Estpose
                                , EIF_2_GTpose, EIF_2_Estpose
                                , EIF_3_GTpose, EIF_3_Estpose)
     
-    # plot_target_position_3D(EIF_t_GTpose, EIF_t_Estpose)
+    plot_target_position_3D(EIF_t_GTpose, EIF_t_Estpose)
 
     plot_RMSE_p(timestamps1, EIF_1_RMSE_p, "iris_1")
     plot_RMSE_v(timestamps1, EIF_1_RMSE_v, "iris_1")
@@ -146,7 +228,7 @@ def plotFromBag(bag, name):
     plot_RMSE_p(timestampst, EIF_t_RMSE_p, "target")
     plot_RMSE_v(timestampst, EIF_t_RMSE_v, "target")
     #plot_combined_RMSE_v(timestamps1, EIF_1_RMSE_v, EIF_2_RMSE_v, EIF_3_RMSE_v)
-
+    plot_det_p(timestampst, EIF_t_det_p, "target")
 def plot_combined_RMSE_p(RMSE_p1, label1, RMSE_p2, label2):
     plt.figure(figsize=(10, 6))
     
@@ -224,6 +306,6 @@ file1 = folder + 'lidar.bag'
 # file2 = folder + 'lidar.bag'
 bag1 = rosbag.Bag(file1)
 # bag2 = rosbag.Bag(file2)
-topic = '/iris_1/SHEIF/Plot'
+# topic = '/iris_1/SHEIF/Plot'
 # plotFromTwoBags(file1, file2, topic, 'QP prediction', 'no QP prediction')
 plotFromBag(bag1, 'THEIF, Only one neigbor robots has absolute position rate 5hz')

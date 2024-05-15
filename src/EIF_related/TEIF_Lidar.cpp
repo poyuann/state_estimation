@@ -8,7 +8,7 @@ target_EIF_lidar::target_EIF_lidar(int state_size)
 	filter_init = false;
     tQ = 7e-4*Eigen::MatrixXd::Identity(target_state_size, target_state_size);
 	EIF_data_init(target_state_size, target_measurement_size, &T);
-	tQ.block(0, 0, 3, 3) = 8e-1*Eigen::MatrixXd::Identity(3, 3);
+	tQ.block(0, 0, 3, 3) = 1e-2*Eigen::MatrixXd::Identity(3, 3);
 	tQ.block(3, 3, 3, 3) = 7e-2*Eigen::MatrixXd::Identity(3, 3);
 	R = 1e-5*Eigen::MatrixXd::Identity(3, 3);
 
@@ -23,9 +23,9 @@ void target_EIF_lidar::setInitialState()
 	std::cout << "Init:\n" << T.X.segment(0, 3) << std::endl;
 	T.P.setIdentity();
 	T.P *= 1e-3;
-    R(0, 0) = 1e-4;
-    R(1, 1) = 2e-1;
-    R(2, 2) = 2e-1;
+    R(0, 0) = 4e-4;
+    R(1, 1) = 1e-3;
+    R(2, 2) = 1e-3;
 	filter_init = true;
 }
 
@@ -67,7 +67,6 @@ void target_EIF_lidar::computeCorrPairs()
         Eigen::Matrix3d R_W2B = Mav_eigen_self.R_w2b;
         std::cout << self.X_hat.segment(0, 3) <<"\n";
         Eigen::Vector3d r_B_hat = R_W2B*(T.X_hat.segment(0,3) - self.X_hat.segment(0,3));
-                        					std::cout << "sucess\n";
 
         double D = sqrt(pow(r_B_hat(0), 2) + pow(r_B_hat(1), 2) + pow(r_B_hat(2), 2));
         T.h(0) = D;

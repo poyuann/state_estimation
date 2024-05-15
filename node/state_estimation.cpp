@@ -7,6 +7,8 @@
 #include <algorithm>
 
 #include <Eigen/Dense>
+#include <Eigen/Core>
+#include <Eigen/SVD>  
 #include <ros/ros.h>
 #include "ros/param.h"
 #include <std_msgs/Float64MultiArray.h>
@@ -180,7 +182,7 @@ int main(int argc, char **argv)
 		SEIF_pose.setFusionPairs(sheif.getFusedCov(), sheif.getFusedState());
 		
 		std::cout << "SEIF:\n";
-		eif_ros.selfState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[ID], sheif.getFusedState()));
+		eif_ros.selfState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[ID], sheif.getFusedState() , sheif.getFusedCov()));
 		
 		// -------------------------------------Target-------------------------------------
 		std::vector<EIF_data> allTgtEIFData;
@@ -200,11 +202,15 @@ int main(int argc, char **argv)
 			// 		teif.setEstAcc(theif.getQpAcc());
 			// }
 		// }
-
 		std::cout << "TEIF:\n";
-		eif_ros.tgtState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[0], theif.getFusedState()));
-		
-		
+		eif_ros.tgtState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[0], theif.getFusedState() , theif.getFusedCov()));
+
+		// Eigen::MatrixXd est_p = theif.getFusedCov();
+
+		// Eigen::JacobiSVD <Eigen::MatrixXd>svd(est_p.inverse(), Eigen:: ComputeThinU | Eigen:: ComputeThinV) ;
+		// cout << "Its singular values are:" << endl << svd.singularValues() << endl;
+		// cout << "Its left singular vectors are the columns of the thin U matrix:" << endl << svd.matrixU() << endl;
+	
 		/*=================================================================================================================================
 			Publish to mavros for feedback
 		=================================================================================================================================*/
@@ -242,7 +248,7 @@ int main(int argc, char **argv)
 
 		// -------------------------------------Camera detect?-------------------------------------
 		isTargetEst_msg.data = gt_m.ifCameraMeasure();
-
+		// -------------------------------------debug-----------------------------------------
 		// -------------------------------------Publish-------------------------------------
 		mavros_fusionPose_pub.publish(self_fusedPoseMsg);
 		mavros_fusionTwist_pub.publish(self_fusedTwistMsg);
