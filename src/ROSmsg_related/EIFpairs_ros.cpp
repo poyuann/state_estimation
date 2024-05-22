@@ -124,7 +124,7 @@ EIF_data eifMsg2Eigen(state_estimation::EIFpairStamped eifMsg)
 	return est_object;
 }
 
-state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::MatrixXd est_p)
+state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::MatrixXd est_p, geometry_msgs::Quaternion GT_ori)
 {
 	Eigen::Vector3d E_p = GT.r - est.segment(0, 3);
 	Eigen::Vector3d E_v = GT.v - est.segment(3, 3);
@@ -143,6 +143,10 @@ state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::Matrix
 	Plot_data.GT_twist.linear.x = GT.v(0);
 	Plot_data.GT_twist.linear.y = GT.v(1);
 	Plot_data.GT_twist.linear.z = GT.v(2);
+	
+	Plot_data.GT_pose.orientation.x = GT_ori.x;
+	Plot_data.GT_pose.orientation.y = GT_ori.y;
+	Plot_data.GT_pose.orientation.z = GT_ori.z;
 
 	Plot_data.est_pose.position.x = est(0);
 	Plot_data.est_pose.position.y = est(1);

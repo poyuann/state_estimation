@@ -182,7 +182,7 @@ int main(int argc, char **argv)
 		SEIF_pose.setFusionPairs(sheif.getFusedCov(), sheif.getFusedState());
 		
 		std::cout << "SEIF:\n";
-		eif_ros.selfState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[ID], sheif.getFusedState() , sheif.getFusedCov()));
+		eif_ros.selfState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[ID], sheif.getFusedState() , sheif.getFusedCov(), gt_m.getGTorientation(ID)));
 		
 		// -------------------------------------Target-------------------------------------
 		std::vector<EIF_data> allTgtEIFData;
@@ -203,7 +203,7 @@ int main(int argc, char **argv)
 			// }
 		// }
 		std::cout << "TEIF:\n";
-		eif_ros.tgtState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[0], theif.getFusedState() , theif.getFusedCov()));
+		eif_ros.tgtState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[0], theif.getFusedState() , theif.getFusedCov(), gt_m.getGTorientation(ID)));
 
 		// Eigen::MatrixXd est_p = theif.getFusedCov();
 

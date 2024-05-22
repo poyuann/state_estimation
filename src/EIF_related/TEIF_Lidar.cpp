@@ -8,8 +8,8 @@ target_EIF_lidar::target_EIF_lidar(int state_size)
 	filter_init = false;
     tQ = 7e-4*Eigen::MatrixXd::Identity(target_state_size, target_state_size);
 	EIF_data_init(target_state_size, target_measurement_size, &T);
-	tQ.block(0, 0, 3, 3) = 1e-2*Eigen::MatrixXd::Identity(3, 3);
-	tQ.block(3, 3, 3, 3) = 7e-2*Eigen::MatrixXd::Identity(3, 3);
+	tQ.block(0, 0, 3, 3) = 1e-3*Eigen::MatrixXd::Identity(3, 3);
+	tQ.block(3, 3, 3, 3) = 8e-2*Eigen::MatrixXd::Identity(3, 3);
 	R = 1e-5*Eigen::MatrixXd::Identity(3, 3);
 
 	Mav_curr.v.setZero();
@@ -24,8 +24,8 @@ void target_EIF_lidar::setInitialState()
 	T.P.setIdentity();
 	T.P *= 1e-3;
     R(0, 0) = 4e-4;
-    R(1, 1) = 1e-3;
-    R(2, 2) = 1e-3;
+    R(1, 1) = 2e-1;
+    R(2, 2) = 2e-1;
 	filter_init = true;
 }
 
