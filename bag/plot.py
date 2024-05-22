@@ -191,6 +191,8 @@ def ploterror3D(GT_poses1, est_poses1,
     plt.title('error 3D Poses')
     plt.show()    
 def plot_imu(timeStamps, GT_poses, dataset_label):
+    plt.figure(figsize = (10,6))
+
     GT_x = np.array([pose.orientation.x for pose in GT_poses])
     GT_y = np.array([pose.orientation.y for pose in GT_poses])
     GT_z = np.array([pose.orientation.z for pose in GT_poses])    
