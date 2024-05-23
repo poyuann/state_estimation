@@ -124,14 +124,20 @@ EIF_data eifMsg2Eigen(state_estimation::EIFpairStamped eifMsg)
 	return est_object;
 }
 
-state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::MatrixXd est_p, geometry_msgs::Quaternion GT_ori)
+state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::MatrixXd est_p, geometry_msgs::Quaternion GT_ori, Eigen::MatrixXd omega)
 {
 	Eigen::Vector3d E_p = GT.r - est.segment(0, 3);
 	Eigen::Vector3d E_v = GT.v - est.segment(3, 3);
 	state_estimation::Plot Plot_data;
 	
+    Eigen::Vector3d rpy = Eigen::Quaterniond(
+			GT_ori.w,
+			GT_ori.x,
+			GT_ori.y,
+			GT_ori.z
+	).toRotationMatrix().eulerAngles(0,1,2);
 
-
+	std::cout << rpy << "\n\n";
 	// std::cout << "State: \n" << est << "\n\n";
 	std::cout << "RMS_p: " << E_p.norm() << "\nRMS_v: " << E_v.norm() << "\n\n";
 
@@ -144,9 +150,9 @@ state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::Matrix
 	Plot_data.GT_twist.linear.y = GT.v(1);
 	Plot_data.GT_twist.linear.z = GT.v(2);
 	
-	Plot_data.GT_pose.orientation.x = GT_ori.x;
-	Plot_data.GT_pose.orientation.y = GT_ori.y;
-	Plot_data.GT_pose.orientation.z = GT_ori.z;
+	Plot_data.GT_pose.orientation.x = rpy(0);
+	Plot_data.GT_pose.orientation.y = rpy(1);
+	Plot_data.GT_pose.orientation.z = rpy(2);
 
 	Plot_data.est_pose.position.x = est(0);
 	Plot_data.est_pose.position.y = est(1);
@@ -158,6 +164,14 @@ state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::Matrix
 	Plot_data.RMSE_p = E_p.norm();
 	Plot_data.RMSE_v = E_v.norm();
 	Plot_data.det_p = est_p.determinant();
+	Plot_data.det_omega = omega.trace();
 	// Plot_data.p = est_p;
 	return Plot_data;
 }
+// state_estimation::Plot information_matrix(Eigen::MatrixXd omega)
+// {	
+// 	state_estimation::Plot Plot_data;
+// 	std::cout<<omega.trace()<<"\n\n";
+// 	Plot_data.det_omega = omega.trace();
+// 	return Plot_data;
+// }

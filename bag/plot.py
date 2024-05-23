@@ -8,6 +8,7 @@ def extract_data(bag, topics):
     GT_poses = []
     est_poses = []
     det_p= []
+    tr_omega= []
     for topic, msg, t in bag.read_messages(topics):
     # Extract relevant data from the message
         timestamps.append(msg.header.stamp.to_sec())
@@ -16,7 +17,8 @@ def extract_data(bag, topics):
         GT_poses.append(msg.GT_pose)
         est_poses.append(msg.est_pose)
         det_p.append(msg.det_p)
-    return timestamps, GT_poses, est_poses, RMSE_p, RMSE_v, det_p
+        tr_omega.append(msg.det_omega)
+    return timestamps, GT_poses, est_poses, RMSE_p, RMSE_v, det_p, tr_omega
 
 
 
@@ -191,12 +193,13 @@ def ploterror3D(GT_poses1, est_poses1,
     plt.title('error 3D Poses')
     plt.show()    
 def plot_imu(timeStamps, GT_poses, dataset_label):
+    plt.figure(figsize = (10,6))
     GT_x = np.array([pose.orientation.x for pose in GT_poses])
     GT_y = np.array([pose.orientation.y for pose in GT_poses])
     GT_z = np.array([pose.orientation.z for pose in GT_poses])    
 
     plt.plot(timeStamps, GT_x, label=f'orientation x for {dataset_label}',color='orange')
-    plt.plot(timeStamps, GT_y, label=f'orientation y for {dataset_label}',color='blue')
+    # plt.plot(timeStamps, GT_y, label=f'orientation y for {dataset_label}',color='blue')
     # plt.plot(timeStamps, GT_z, label=f'orientation z for {dataset_label}',color='green')
     
     # plt.axhline(y=average, color='r', linestyle='--',label=f'Average det_p: {average}')
@@ -207,14 +210,27 @@ def plot_imu(timeStamps, GT_poses, dataset_label):
     plt.legend()
     plt.grid(True)
     plt.show()
+def plot_tr_s(timeStamps, tr_s, dataset_label):
+    plt.figure(figsize = (10,6))
+    average = sum(tr_s)/len(tr_s)
+    # print(average)
+    plt.plot(timeStamps, tr_s, label=f'tr_s for {dataset_label}',color='orange')
+    plt.axhline(y=average, color='r', linestyle='--',label=f'Average tr_s: {average}')
+    plt.text(timeStamps[int(len(timeStamps)/ 10)], average, f'Average : {average}', color='red')
+    plt.xlabel('Time (seconds)')
+    plt.ylabel('')
+    plt.title(f'tr s for {dataset_label}')
+    plt.legend()
+    plt.grid(True)
+    plt.show()    
 def plotFromBag(bag, name):
     E_x = []
     E_y = []
     E_z = []
-    timestamps1, EIF_1_GTpose, EIF_1_Estpose, EIF_1_RMSE_p, EIF_1_RMSE_v , EIF_1_det_p  = extract_data(bag, '/iris_1/SHEIF/Plot')
-    timestamps2, EIF_2_GTpose, EIF_2_Estpose, EIF_2_RMSE_p, EIF_2_RMSE_v , EIF_2_det_p  = extract_data(bag, '/iris_2/SHEIF/Plot')
-    timestamps3, EIF_3_GTpose, EIF_3_Estpose, EIF_3_RMSE_p, EIF_3_RMSE_v , EIF_3_det_p  = extract_data(bag, '/iris_3/SHEIF/Plot')
-    timestampst, EIF_t_GTpose, EIF_t_Estpose, EIF_t_RMSE_p, EIF_t_RMSE_v , EIF_t_det_p = extract_data(bag, '/iris_1/THEIF/Plot')
+    timestamps1, EIF_1_GTpose, EIF_1_Estpose, EIF_1_RMSE_p, EIF_1_RMSE_v , EIF_1_det_p ,tr_omega1 = extract_data(bag, '/iris_1/SHEIF/Plot')
+    timestamps2, EIF_2_GTpose, EIF_2_Estpose, EIF_2_RMSE_p, EIF_2_RMSE_v , EIF_2_det_p ,tr_omega2 = extract_data(bag, '/iris_2/SHEIF/Plot')
+    timestamps3, EIF_3_GTpose, EIF_3_Estpose, EIF_3_RMSE_p, EIF_3_RMSE_v , EIF_3_det_p ,tr_omega3 = extract_data(bag, '/iris_3/SHEIF/Plot')
+    timestampst, EIF_t_GTpose, EIF_t_Estpose, EIF_t_RMSE_p, EIF_t_RMSE_v , EIF_t_det_p ,tr_omegat = extract_data(bag, '/iris_1/THEIF/Plot')
     # for (GTpose, Estpose) in zip(EIF_1_GTpose, EIF_1_Estpose):
         # E_x.append(abs(GTpose.position.x - Estpose.position.x))
         # E_y.append(abs(GTpose.position.y - Estpose.position.y))
@@ -228,24 +244,26 @@ def plotFromBag(bag, name):
     #             , EIF_t_GTpose, EIF_t_Estpose
     #             , new_bool)
     
-    # plot_combined_position_3D(EIF_1_GTpose, EIF_1_Estpose
-    #                            , EIF_2_GTpose, EIF_2_Estpose
-    #                            , EIF_3_GTpose, EIF_3_Estpose)
+    plot_combined_position_3D(EIF_1_GTpose, EIF_1_Estpose
+                               , EIF_2_GTpose, EIF_2_Estpose
+                               , EIF_3_GTpose, EIF_3_Estpose)
     
-    # plot_target_position_3D(EIF_t_GTpose, EIF_t_Estpose)
+    plot_target_position_3D(EIF_t_GTpose, EIF_t_Estpose)
 
-    # plot_RMSE_p(timestamps1, EIF_1_RMSE_p, "iris_1")
-    # plot_RMSE_v(timestamps1, EIF_1_RMSE_v, "iris_1")
-    # plot_RMSE_p(timestamps2, EIF_2_RMSE_p, "iris_2")
-    # plot_RMSE_v(timestamps2, EIF_2_RMSE_v, "iris_2")
-    # plot_RMSE_p(timestamps3, EIF_3_RMSE_p, "iris_3")
-    # plot_RMSE_v(timestamps3, EIF_3_RMSE_v, "iris_3")
+    plot_RMSE_p(timestamps1, EIF_1_RMSE_p, "iris_1")
+    plot_RMSE_v(timestamps1, EIF_1_RMSE_v, "iris_1")
+    plot_RMSE_p(timestamps2, EIF_2_RMSE_p, "iris_2")
+    plot_RMSE_v(timestamps2, EIF_2_RMSE_v, "iris_2")
+    plot_RMSE_p(timestamps3, EIF_3_RMSE_p, "iris_3")
+    plot_RMSE_v(timestamps3, EIF_3_RMSE_v, "iris_3")
     plot_RMSE_p(timestampst, EIF_t_RMSE_p, "target")
     plot_RMSE_v(timestampst, EIF_t_RMSE_v, "target")
     plot_imu(timestamps1,EIF_1_GTpose, "iris_1")
     plot_imu(timestamps2,EIF_2_GTpose, "iris_2")
     plot_imu(timestamps3,EIF_3_GTpose, "iris_3")
-    
+    plot_tr_s(timestamps1, tr_omega1, "iris_1")
+    plot_tr_s(timestamps2, tr_omega2, "iris_2")
+    plot_tr_s(timestamps3, tr_omega3, "iris_3")
     plot_det_p(timestampst, EIF_t_det_p, "target")
 def plot_combined_RMSE_p(RMSE_p1, label1, RMSE_p2, label2):
     plt.figure(figsize=(10, 6))

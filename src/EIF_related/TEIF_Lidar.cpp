@@ -139,6 +139,7 @@ void target_EIF_lidar::setFusionPairs(Eigen::MatrixXd fusedP, Eigen::VectorXd fu
 
 EIF_data target_EIF_lidar::getTgtData(){return T;}
 EIF_data target_EIF_lidar::getSelfData(){return self;}
+Eigen::MatrixXd target_EIF_lidar::getomega(){return T.s;}
 void target_EIF_lidar::setEstAcc(Eigen::Vector3d acc)
 {
 	u = acc;

@@ -34,6 +34,7 @@ class target_EIF_lidar : public EIF
         void setPreMeasurement(Eigen::Vector3d LM);
         bool checkPreMeasurement(Eigen::Vector3d LM);
 
+        Eigen::MatrixXd getomega();
         std::vector<EIF_data> getEIFData();
         EIF_data getTgtData();
         EIF_data getSelfData();
