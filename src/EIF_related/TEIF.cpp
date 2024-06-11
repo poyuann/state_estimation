@@ -30,7 +30,7 @@ void target_EIF::setInitialState(Eigen::Vector3d Bbox)
 	filter_init = true;
 }
 
-void target_EIF::setMeasurement(Eigen::Vector3d bBox){boundingBox = bBox;}
+void target_EIF::setMeasurement(Eigen::Vector3d bBox){CameraModel = bBox;}
 
 void target_EIF::setSEIFpredData(EIF_data self_data)
 {
@@ -54,7 +54,7 @@ void target_EIF::computePredPairs(double delta_t)
 }
 void target_EIF::computeCorrPairs()
 {
-	T.z = boundingBox;
+	T.z = CameraModel;
 
 	T.s.setZero();
 	T.y.setZero();
@@ -63,7 +63,11 @@ void target_EIF::computeCorrPairs()
 	if(T.z != T.pre_z && T.z(2) >= 2.0 && T.z(2) <= 12.0)
 	{
 		Eigen::MatrixXd R_hat, R_bar;
-		Eigen::Matrix3d R_w2c = cam.R_B2C()*Mav_eigen_self.R_w2b; ///////////////// rotation problem
+		Eigen::Matrix3d R_b2c ;
+		R_b2c << 0, 1, 0,
+				0, 0, 1,
+				1, 0, 0;
+		Eigen::Matrix3d R_w2c = R_b2c*Mav_eigen_self.R_w2b; ///////////////// rotation problem
 		Eigen::Vector3d r_qc_c = R_w2c*(T.X_hat.segment(0, 3) - self.X_hat.segment(0, 3)); 
 
 		X = r_qc_c(0)/r_qc_c(2);

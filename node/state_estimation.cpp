@@ -138,17 +138,17 @@ int main(int argc, char **argv)
 		SEIF_neighbors.setNeighborData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05));
 
 		// -------------------------------------Target-------------------------------------
-		gt_m.bbox_check();
-		if(gt_m.ifCameraMeasure())
-		{
-			if(!teif.filter_init)
-				teif.setInitialState(gt_m.getBboxEigen());
+		// gt_m.bbox_check();
+		// if(gt_m.ifCameraMeasure())
+		// {
+		// 	if(!teif.filter_init)
+				// teif.setInitialState(gt_m.getBboxEigen());
 			teif.setCamera(cam);
 			teif.setMavSelfData(mav_eigen); 
-			teif.setMeasurement(gt_m.getBboxEigen());
+			teif.setMeasurement(gt_m.getCamera4target());
 			teif.setSEIFpredData(SEIF_pose.getEIFData());
 		 	teif.computePredPairs(dt);
-		}
+		// }
 		// if (!teif.filter_init)
 		// 	teif.setInitialState();
 		// teif.setMavSelfData(mav_eigen);	
@@ -163,11 +163,11 @@ int main(int argc, char **argv)
 		SEIF_neighbors.computeCorrPairs();
 
 		// -------------------------------------Target-------------------------------------
-		if(gt_m.ifCameraMeasure())
-		{
+		// if(gt_m.ifCameraMeasure())
+		// {
 		 	teif.computeCorrPairs();
 			eif_ros.self2TgtEIFpairs_pub.publish(eigen2EifMsg(teif.getTgtData(), ID));
-		}
+		// }
 		
 		/*=================================================================================================================================
 			Fusion
@@ -184,12 +184,12 @@ int main(int argc, char **argv)
 		// -------------------------------------Target-------------------------------------
 		std::vector<EIF_data> allTgtEIFData;
 		allTgtEIFData = eif_ros.get_curr_fusing_data(eif_ros.rbs2Tgt_EIFPairs, 0.05);
-		if(gt_m.ifCameraMeasure())
+		// if(gt_m.ifCameraMeasure())
 			allTgtEIFData.push_back(teif.getTgtData());
 		theif.setTargetEstData(allTgtEIFData);
 		theif.process();
-		if(gt_m.ifCameraMeasure())
-		{
+		// if(gt_m.ifCameraMeasure())
+		// {
 			teif.setFusionPairs(theif.getFusedCov(), theif.getFusedState(), ros::Time::now().toSec());
 			
 			// if(theif.QP_init(15, 2))
@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 			// 	if(theif.computeQP());
 			// 		teif.setEstAcc(theif.getQpAcc());
 			// }
-		}
+		// }
 		std::cout << "TEIF:\n";
 		eif_ros.tgtState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[0], theif.getFusedState() , theif.getFusedCov(), gt_m.getGTorientation(ID)));
 

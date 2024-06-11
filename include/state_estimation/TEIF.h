@@ -17,7 +17,7 @@ private:
     EIF_data T;
     EIF_data self;
     Eigen::Vector3d boundingBox;
-
+    Eigen::Vector3d CameraModel;
     MAV_eigen Mav_curr;
 
     Eigen::Vector3d u;

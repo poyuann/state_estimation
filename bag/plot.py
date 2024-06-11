@@ -230,11 +230,11 @@ def plotFromBag(bag, name):
     #             , EIF_t_GTpose, EIF_t_Estpose
     #             , new_bool)
     
-    # plot_combined_position_3D(EIF_1_GTpose, EIF_1_Estpose
-    #                            , EIF_2_GTpose, EIF_2_Estpose
-    #                            , EIF_3_GTpose, EIF_3_Estpose)
+    plot_combined_position_3D(EIF_1_GTpose, EIF_1_Estpose
+                               , EIF_2_GTpose, EIF_2_Estpose
+                               , EIF_3_GTpose, EIF_3_Estpose)
     
-    # plot_target_position_3D(EIF_t_GTpose, EIF_t_Estpose)
+    plot_target_position_3D(EIF_t_GTpose, EIF_t_Estpose)
 
     # plot_RMSE_p(timestamps1, EIF_1_RMSE_p, "iris_1")
     # plot_RMSE_v(timestamps1, EIF_1_RMSE_v, "iris_1")
@@ -244,9 +244,9 @@ def plotFromBag(bag, name):
     # plot_RMSE_v(timestamps3, EIF_3_RMSE_v, "iris_3")
     plot_RMSE_p(timestampst, EIF_t_RMSE_p, "target")
     plot_RMSE_v(timestampst, EIF_t_RMSE_v, "target")
-    plot_imu(timestamps1,EIF_1_GTpose, "iris_1")
-    plot_imu(timestamps2,EIF_2_GTpose, "iris_2")
-    plot_imu(timestamps3,EIF_3_GTpose, "iris_3")
+    # plot_imu(timestamps1,EIF_1_GTpose, "iris_1")
+    # plot_imu(timestamps2,EIF_2_GTpose, "iris_2")
+    # plot_imu(timestamps3,EIF_3_GTpose, "iris_3")
     
     plot_det_p(timestampst, EIF_t_det_p, "target")
 def plot_combined_RMSE_p(RMSE_p1, label1, RMSE_p2, label2):
@@ -322,7 +322,7 @@ def plotFromTwoBags(file1, file2, topic, label1, label2):
 
 folder = '/home/ncrl/eif_ws/src/state_estimation/bag/'
 
-file1 = folder + 'lidar.bag'
+file1 = folder + 'cameramodel.bag'
 # file2 = folder + 'lidar.bag'
 bag1 = rosbag.Bag(file1)
 # bag2 = rosbag.Bag(file2)

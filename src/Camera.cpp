@@ -2,12 +2,12 @@
 
 Camera::Camera()
 {
-    fx_ = 565.6008952774197;
-    fy_ = 565.6008952774197;
-    cx_ = 320.5;
-    cy_ = 240.5;
-    lx_ = 640;
-    ly_ = 480;
+    fx_ = 1029.477219320806;
+    fy_ = 1029.477219320806;
+    cx_ = 960.5;
+    cy_ = 540.5;
+    lx_ = 1280;
+    ly_ = 960;
 
 	t_b2c.setZero();
 	R_b2c.setIdentity();
@@ -20,10 +20,10 @@ Camera::Camera(ros::NodeHandle &nh_, bool gimbal)
         nh = nh_;
         jointState_sub = nh.subscribe<sensor_msgs::JointState>("gimbal/joint_states", 5, &Camera::jointState_cb, this);
 
-        fx_ = 565.6008952774197;
-        fy_ = 565.6008952774197;
-        cx_ = 320.5;
-        cy_ = 240.5;
+        fx_ = 1029.477219320806;
+        fy_ = 1029.477219320806;
+        cx_ = 960.5;
+        cy_ = 540.5;
 
         t_b2c << 0.041, 0, -0.162;
         R_b2m << 1, 0, 0,
@@ -35,10 +35,10 @@ Camera::Camera(ros::NodeHandle &nh_, bool gimbal)
     }
     else
     {
-        fx_ = 565.6008952774197;
-        fy_ = 565.6008952774197;
-        cx_ = 320.5;
-        cy_ = 240.5;
+        fx_ = 1029.477219320806;
+        fy_ = 1029.477219320806;
+        cx_ = 960.5;
+        cy_ = 540.5;
         
         t_b2c<< 0.1, 0, 0; 
         R_b2c<< 0, 1, 0,

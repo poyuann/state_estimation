@@ -41,8 +41,13 @@ private:
     int position_rate;
 
     std::vector<Eigen::Vector4d> lidarMeasure(std::vector<MAV_eigen> GTs_eigen, std::default_random_engine generator);
-    Eigen::Vector3d lidarmeasure4target(std::vector<MAV_eigen> formation_eigen_GT, MAV_eigen GTs_eigen, std::default_random_engine generator);
+    Eigen::Vector3d lidarmeasure4target(std::vector<MAV_eigen> formation_eigen_GT, MAV_eigen target_eigen, std::default_random_engine generator);
     Eigen::Vector3d positionMeasure(MAV_eigen GT_eigen, std::default_random_engine generator);
+  /*=================================================================================================================================
+        Camera model
+    =================================================================================================================================*/
+    Eigen::Vector3d CameraModel;
+    Eigen::Vector3d CameraMeasure4target(std::vector<MAV_eigen> formation_eigen_GT, MAV_eigen target_eigen, std::default_random_engine generator);
     /*=================================================================================================================================
         Camera boundingBox
     =================================================================================================================================*/
@@ -73,6 +78,10 @@ public:
     Eigen::Vector3d getlidar4target();
     Eigen::Vector3d getPositionMeasurement();
 
+ /*=================================================================================================================================
+        Camera model
+    =================================================================================================================================*/
+    Eigen::Vector3d getCamera4target();
     /*=================================================================================================================================
         Camera boundingBox
     =================================================================================================================================*/

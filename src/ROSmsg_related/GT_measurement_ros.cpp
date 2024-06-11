@@ -25,7 +25,7 @@ GT_measurement::GT_measurement(ros::NodeHandle& nh_, int id, int mavnum)
 	/*=================================================================================================================================
         Camera boundingBox
     =================================================================================================================================*/	
-    bboxes_sub = nh.subscribe<std_msgs::Float64MultiArray>("synchronizer/yolov7/boundingBox", 2, &GT_measurement::bboxes_cb, this);
+    bboxes_sub = nh.subscribe<std_msgs::Float64MultiArray>("synchronizer/yolov8/boundingBox", 2, &GT_measurement::bboxes_cb, this);
 	bbox_count = 0;
 	no_bbox_count = 0;
 	checkCount = 0;
@@ -71,6 +71,7 @@ void GT_measurement::groundTruth_cb(const gazebo_msgs::ModelStates::ConstPtr& ms
 	{
 		lidarMeasurements = lidarMeasure(formation_eigen_GT, generator);
 		lidar4target = lidarmeasure4target(formation_eigen_GT,GTs_eigen[0], generator);
+		CameraModel = CameraMeasure4target(formation_eigen_GT,GTs_eigen[0], generator);
 	}
 	if(GTs_count % (GTs_rate/position_rate) == 0) // position_rate = 10hz means that we do a measurement evry 50 count 
 		positionMeasurement = positionMeasure(GTs_eigen[ID], generator);
@@ -115,24 +116,24 @@ std::vector<Eigen::Vector4d> GT_measurement::lidarMeasure(std::vector<MAV_eigen>
 	}
 	return measurements;
 }
-Eigen::Vector3d GT_measurement::lidarmeasure4target(std::vector<MAV_eigen> formation_GT,MAV_eigen GTs_eigen, std::default_random_engine generator)
+Eigen::Vector3d GT_measurement::lidarmeasure4target(std::vector<MAV_eigen> formation_GT,MAV_eigen target_eigen, std::default_random_engine generator)
 {
 	Eigen::Vector3d measurement;
 	Eigen::Vector3d r_ns_B;
 	Eigen::Matrix3d R_W2B = formation_GT[self_index].R_w2b;
 
-			r_ns_B = R_W2B*(GTs_eigen.r - formation_GT[self_index].r);
+	r_ns_B = R_W2B*(target_eigen.r - formation_GT[self_index].r);
 
-			measurement(0) = sqrt(pow(r_ns_B(0), 2) + pow(r_ns_B(1), 2) + pow(r_ns_B(2), 2));
-			measurement(1) = acos(r_ns_B(2)/measurement(0)); // theta
-			measurement(2) = atan2(r_ns_B(1), r_ns_B(0)); // phi
+	measurement(0) = sqrt(pow(r_ns_B(0), 2) + pow(r_ns_B(1), 2) + pow(r_ns_B(2), 2));
+	measurement(1) = acos(r_ns_B(2)/measurement(0)); // theta
+	measurement(2) = atan2(r_ns_B(1), r_ns_B(0)); // phi
 
-			std::normal_distribution<double> n_D(0.0, 0.02);
-			std::normal_distribution<double> n_theta(0.0, 0.035);
-			std::normal_distribution<double> n_phi(0.0, 0.035);
-			measurement(0) += n_D(generator);
-			measurement(1) += n_theta(generator);
-			measurement(2) += n_phi(generator);		
+	std::normal_distribution<double> n_D(0.0, 0.02);
+	std::normal_distribution<double> n_theta(0.0, 0.035);
+	std::normal_distribution<double> n_phi(0.0, 0.035);
+	measurement(0) += n_D(generator);
+	measurement(1) += n_theta(generator);
+	measurement(2) += n_phi(generator);		
 		
 	return measurement;
 }
@@ -153,7 +154,35 @@ Eigen::Vector3d GT_measurement::positionMeasure(MAV_eigen GT_eigen, std::default
 std::vector<Eigen::Vector4d> GT_measurement::getLidarMeasurements(){return lidarMeasurements;}
 Eigen::Vector3d GT_measurement::getlidar4target(){return  lidar4target;}
 Eigen::Vector3d GT_measurement::getPositionMeasurement(){return positionMeasurement;}
+/*=================================================================================================================================
+    Camera model
+=================================================================================================================================*/
+Eigen::Vector3d GT_measurement::CameraMeasure4target(std::vector<MAV_eigen> formation_GT,MAV_eigen target_eigen, std::default_random_engine generator)
+{	
+	double fx = 1029.477219320806;
+    double fy = 1029.477219320806;
+	double cx = 960.5;
+	double cy = 540.5;
+	Eigen::Vector3d measurement;
+	Eigen::Matrix3d R_b2c ;
+	 R_b2c << 0, 1, 0,
+			0, 0, 1,
+			1, 0, 0;
+	Eigen::Matrix3d R_w2c = R_b2c*formation_GT[self_index].R_w2b; ///////////////// rotation problem
+	Eigen::Vector3d r_qc_c = R_w2c*(target_eigen.r - formation_GT[self_index].r); 
 
+	double X = r_qc_c(0)/r_qc_c(2);
+	double Y = r_qc_c(1)/r_qc_c(2);
+	double Z = r_qc_c(2);
+
+	measurement(0) = fx*X + cx;
+	measurement(1) = fy*Y + cy ;
+	measurement(2) = Z;
+
+	return measurement;
+
+}
+Eigen::Vector3d GT_measurement::getCamera4target(){return  CameraModel;}
 /*=================================================================================================================================
     Camera boundingBox
 =================================================================================================================================*/
