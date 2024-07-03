@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   geometry_msgs
+  yolov8_ros_msgs
   message_filters
   message_generation
   cv_bridge
@@ -57,10 +58,10 @@ find_package(OsqpEigen REQUIRED)
 
 ## Generate messages in the 'msg' folder
  add_message_files(
-   FILES
-   Int32MultiArrayStamped.msg  
-   EIFpairStamped.msg
-   Plot.msg
+  FILES
+  Int32MultiArrayStamped.msg  
+  EIFpairStamped.msg
+  Plot.msg
  )
 
 ## Generate services in the 'srv' folder
@@ -82,6 +83,7 @@ find_package(OsqpEigen REQUIRED)
    DEPENDENCIES
    std_msgs
    geometry_msgs
+   yolov8_ros_msgs
  )
 
 ################################################

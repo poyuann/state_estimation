@@ -46,7 +46,9 @@ private:
   /*=================================================================================================================================
         Camera model
     =================================================================================================================================*/
-    Eigen::Vector3d CameraModel;
+    std::vector<Eigen::Vector4d> CameraModel;
+    Eigen::Vector3d CameraModel4target;
+    std::vector<Eigen::Vector4d> Camera4Neighbor(std::vector<MAV_eigen> GTs_eigen, std::default_random_engine generator);
     Eigen::Vector3d CameraMeasure4target(std::vector<MAV_eigen> formation_eigen_GT, MAV_eigen target_eigen, std::default_random_engine generator);
     /*=================================================================================================================================
         Camera boundingBox
@@ -81,6 +83,7 @@ public:
  /*=================================================================================================================================
         Camera model
     =================================================================================================================================*/
+    std::vector<Eigen::Vector4d>getCameraNeighbor();
     Eigen::Vector3d getCamera4target();
     /*=================================================================================================================================
         Camera boundingBox

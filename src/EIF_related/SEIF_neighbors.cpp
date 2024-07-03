@@ -14,9 +14,9 @@ Self_rel_EIF::Self_rel_EIF()
 }
 Self_rel_EIF::~Self_rel_EIF(){}
 
-void Self_rel_EIF::setLidarMeasurements(std::vector<Eigen::Vector4d> LMs)
+void Self_rel_EIF::setmeasurements(std::vector<Eigen::Vector4d> CMs)
 {
-    lidarMeasurements = LMs;
+    camerameasurements = CMs;
 }
 
 void Self_rel_EIF::setNeighborData(std::vector<EIF_data> robots)
@@ -31,59 +31,62 @@ void Self_rel_EIF::setEIFpredData(EIF_data pred)
     self = pred;
 }
 
-EIF_data Self_rel_EIF::computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor_pred)
+EIF_data Self_rel_EIF::computeCorrPair(Eigen::Vector4d CM, EIF_data& neighbor)
 {
-    self.z = LM.segment(0, 3);
+    double fx = 1029.477219320806;
+    double fy = 1029.477219320806;
+	double cx = 960.5;
+	double cy = 540.5;
+    self.z = CM.segment(0, 3);
 
     self.s.setZero();
     self.y.setZero();
-    if(checkPreMeasurement(LM))
+
+    double X,Y,Z;
+    if(checkPreMeasurement(CM))
     {
         Eigen::MatrixXd R_hat;
-        Eigen::Matrix3d R_W2B = Mav_eigen_self.R_w2b;
-        Eigen::Vector3d r_B_hat = R_W2B*(neighbor_pred.X_hat.segment(0, 3) - self.X_hat.segment(0, 3));
-        
-        double D = sqrt(pow(r_B_hat(0), 2) + pow(r_B_hat(1), 2) + pow(r_B_hat(2), 2));
-        
-        self.h(0) = D;
-        self.h(1) = std::acos(r_B_hat(2)/D);
-        self.h(2) = std::atan2(r_B_hat(1), r_B_hat(0));
-        
+		Eigen::Matrix3d R_b2c ;
+		R_b2c << 0, 1, 0,
+				0, 0, 1,
+				1, 0, 0;
+                
+		Eigen::Matrix3d R_w2c = R_b2c*Mav_eigen_self.R_w2b; ///////////////// rotation problem
+		Eigen::Vector3d r_qc_c = R_w2c*(neighbor.X_hat.segment(0, 3) - self.X_hat.segment(0, 3)); 
+
+		X = r_qc_c(0)/r_qc_c(2);
+		Y = r_qc_c(1)/r_qc_c(2);
+		Z = r_qc_c(2);
+
+		self.h(0) = cam.fx()*X + cam.cx();
+		self.h(1) = cam.fy()*Y + cam.cy();
+		self.h(2) = Z;
+
+        neighbor.z = self.z;
+        neighbor.h = self.h;
         ////////////////////////////////////////////////// derivative w.r.t neighbor //////////////////////////////////////////////////
-        
-        neighbor_pred.H.setZero(self_measurement_size, self_state_size);
+        neighbor.H.setZero(self_measurement_size, self_state_size);
 
-        neighbor_pred.H(0, 0) = (R_W2B(0, 0)*r_B_hat(0) + R_W2B(1, 0)*r_B_hat(1) + R_W2B(2, 0)*r_B_hat(2)) / D;
-        neighbor_pred.H(0, 1) = (R_W2B(0, 1)*r_B_hat(0) + R_W2B(1, 1)*r_B_hat(1) + R_W2B(2, 1)*r_B_hat(2)) / D;
-        neighbor_pred.H(0, 2) = (R_W2B(0, 2)*r_B_hat(0) + R_W2B(1, 2)*r_B_hat(1) + R_W2B(2, 2)*r_B_hat(2)) / D;
-        
-        neighbor_pred.H(1, 0) = (R_W2B(0, 0)*r_B_hat(0)*r_B_hat(2)
-                                + R_W2B(1, 0)*r_B_hat(1)*r_B_hat(2)
-                                - R_W2B(2, 0)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
-                                /(D*D * sqrt(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)));
-        neighbor_pred.H(1, 1) = (R_W2B(0, 1)*r_B_hat(0)*r_B_hat(2)
-                                + R_W2B(1, 1)*r_B_hat(1)*r_B_hat(2)
-                                - R_W2B(2, 1)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
-                                /(D*D * sqrt(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)));
-        neighbor_pred.H(1, 2) = (R_W2B(0, 2)*r_B_hat(0)*r_B_hat(2)
-                                + R_W2B(1, 2)*r_B_hat(1)*r_B_hat(2)
-                                - R_W2B(2, 2)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
-                                /(D*D * sqrt(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)));
-
-        neighbor_pred.H(2, 0) = (-R_W2B(0, 0)*r_B_hat(1) + R_W2B(1, 0)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
-        neighbor_pred.H(2, 1) = (-R_W2B(0, 1)*r_B_hat(1) + R_W2B(1, 1)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
-        neighbor_pred.H(2, 2) = (-R_W2B(0, 2)*r_B_hat(1) + R_W2B(1, 2)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
-
+		neighbor.H(0, 0) = (cam.fx()/Z)*(R_w2c(0, 0) - R_w2c(2, 0)*X);
+		neighbor.H(0, 1) = (cam.fx()/Z)*(R_w2c(0, 1) - R_w2c(2, 1)*X);
+		neighbor.H(0, 2) = (cam.fx()/Z)*(R_w2c(0, 2) - R_w2c(2, 2)*X);
+		neighbor.H(1, 0) = (cam.fy()/Z)*(R_w2c(1, 0) - R_w2c(2, 0)*Y);
+		neighbor.H(1, 1) = (cam.fy()/Z)*(R_w2c(1, 1) - R_w2c(2, 1)*Y);
+		neighbor.H(1, 2) = (cam.fy()/Z)*(R_w2c(1, 2) - R_w2c(2, 2)*Y);
+		neighbor.H(2, 0) = R_w2c(2, 0);
+		neighbor.H(2, 1) = R_w2c(2, 1);
+		neighbor.H(2, 2) = R_w2c(2, 2);
         ////////////////////////////////////////////////// derivative w.r.t self //////////////////////////////////////////////////
-        self.H = -neighbor_pred.H;
+        self.H = -neighbor.H;
         
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        R_hat = R + neighbor_pred.H*neighbor_pred.P_hat*neighbor_pred.H.transpose();
+        R_hat = R + neighbor.H*neighbor.P_hat*neighbor.H.transpose();
 
         self.s = self.H.transpose()*R_hat.inverse()*self.H;
         self.y = self.H.transpose()*R_hat.inverse()*(self.z - self.h + self.H*self.X_hat);
     }
-    setPreMeasurement(LM);
+
+    setPreMeasurement(CM);
     return self;
 }
 
@@ -92,11 +95,12 @@ void Self_rel_EIF::computeCorrPairs()
     selfWRTneighbors.clear();
     for(int i=0; i< neighbor_num_curr; i++)
     {
-        for(int j=0; j<lidarMeasurements.size(); j++)
-            if(lidarMeasurements[j](3) == neighbors_pred[i].ID)
+        for(int j=0; j<camerameasurements.size(); j++)
+            if(camerameasurements[j](3) == neighbors_pred[i].ID)
             {
-                selfWRTneighbors.push_back(computeCorrPair(lidarMeasurements[j], neighbors_pred[i]));
-                // std::cout >> lidarMeasurements[j] >>"\n";
+                // std::cout << "\n\n\n"<<camerameasurements[j] <<"\n\n";
+
+                selfWRTneighbors.push_back(computeCorrPair(camerameasurements[j], neighbors_pred[i]));
                 break;
             }
     }
@@ -104,38 +108,38 @@ void Self_rel_EIF::computeCorrPairs()
 
 std::vector<EIF_data> Self_rel_EIF::getEIFData(){ return selfWRTneighbors;}
 
-void Self_rel_EIF::setPreMeasurement(Eigen::Vector4d LM)
+void Self_rel_EIF::setPreMeasurement(Eigen::Vector4d CM)
 {
-    if(pre_lidarMeasurements.size() == 0)
+    if(pre_camerameasurements.size() == 0)
     {
-        pre_lidarMeasurements.push_back(LM);
+        pre_camerameasurements.push_back(CM);
     }
     else
     {
         bool found = false;
-        for(int i=0; i< pre_lidarMeasurements.size(); i++)
+        for(int i=0; i< pre_camerameasurements.size(); i++)
         {
-            if(pre_lidarMeasurements[i](3) == LM(3))
+            if(pre_camerameasurements[i](3) == CM(3))
             {
-                pre_lidarMeasurements[i] = LM;
+                pre_camerameasurements[i] = CM;
                 found = true;
                 break;
             }    
         }
         if(!found)
-            pre_lidarMeasurements.push_back(LM);
+            pre_camerameasurements.push_back(CM);
     }
 }
 
-bool Self_rel_EIF::checkPreMeasurement(Eigen::Vector4d LM)
+bool Self_rel_EIF::checkPreMeasurement(Eigen::Vector4d CM)
 {
-    if(pre_lidarMeasurements.size() > 0)
+    if(pre_camerameasurements.size() > 0)
     {
-        for(int i=0; i<pre_lidarMeasurements.size(); i++)
+        for(int i=0; i<pre_camerameasurements.size(); i++)
         {
-            if(pre_lidarMeasurements[i](3) == LM(3))
+            if(pre_camerameasurements[i](3) == CM(3))
             {
-                if(pre_lidarMeasurements[i].segment(0, 3) == LM.segment(0, 3))
+                if(pre_camerameasurements[i].segment(0, 3) == CM.segment(0, 3))
                     return false;
                 else
                     return true;

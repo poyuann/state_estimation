@@ -71,7 +71,8 @@ void GT_measurement::groundTruth_cb(const gazebo_msgs::ModelStates::ConstPtr& ms
 	{
 		lidarMeasurements = lidarMeasure(formation_eigen_GT, generator);
 		lidar4target = lidarmeasure4target(formation_eigen_GT,GTs_eigen[0], generator);
-		CameraModel = CameraMeasure4target(formation_eigen_GT,GTs_eigen[0], generator);
+		CameraModel = Camera4Neighbor(formation_eigen_GT, generator);
+		CameraModel4target = CameraMeasure4target(formation_eigen_GT,GTs_eigen[0], generator);
 	}
 	if(GTs_count % (GTs_rate/position_rate) == 0) // position_rate = 10hz means that we do a measurement evry 50 count 
 		positionMeasurement = positionMeasure(GTs_eigen[ID], generator);
@@ -157,6 +158,44 @@ Eigen::Vector3d GT_measurement::getPositionMeasurement(){return positionMeasurem
 /*=================================================================================================================================
     Camera model
 =================================================================================================================================*/
+
+std::vector<Eigen::Vector4d> GT_measurement::Camera4Neighbor(std::vector<MAV_eigen> formation_GT,std::default_random_engine generator)
+{	
+	double fx = 1029.477219320806;
+    double fy = 1029.477219320806;
+	double cx = 960.5;
+	double cy = 540.5;
+	double X,Y,Z;
+	Eigen::Vector4d measurement;
+	std::vector<Eigen::Vector4d> measurements;
+
+	Eigen::Matrix3d R_b2c ;
+	 R_b2c << 0, 1, 0,
+			0, 0, 1,
+			1, 0, 0;
+	Eigen::Matrix3d R_w2c = R_b2c*formation_GT[self_index].R_w2b; ///////////////// rotation problem
+	Eigen::Vector3d r_qc_c;
+	for(int i=0; i<formation_num; i++)
+	{
+		if(i != self_index)
+		{
+			r_qc_c= R_w2c*(formation_GT[i].r - formation_GT[self_index].r); 
+
+			X = r_qc_c(0)/r_qc_c(2);
+			Y = r_qc_c(1)/r_qc_c(2);
+			Z = r_qc_c(2);
+
+			measurement(0) = fx*X + cx;
+			measurement(1) = fy*Y + cy ;
+			measurement(2) = Z;
+			measurement(3) = i+1; // ID
+
+			measurements.push_back(measurement);
+		}
+	}
+	return measurements;
+
+}
 Eigen::Vector3d GT_measurement::CameraMeasure4target(std::vector<MAV_eigen> formation_GT,MAV_eigen target_eigen, std::default_random_engine generator)
 {	
 	double fx = 1029.477219320806;
@@ -182,7 +221,8 @@ Eigen::Vector3d GT_measurement::CameraMeasure4target(std::vector<MAV_eigen> form
 	return measurement;
 
 }
-Eigen::Vector3d GT_measurement::getCamera4target(){return  CameraModel;}
+std::vector<Eigen::Vector4d>GT_measurement::getCameraNeighbor(){return CameraModel;}
+Eigen::Vector3d GT_measurement::getCamera4target(){return  CameraModel4target;}
 /*=================================================================================================================================
     Camera boundingBox
 =================================================================================================================================*/
