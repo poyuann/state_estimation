@@ -29,6 +29,7 @@
 #include "HEIF_target.h"
 #include "SEIF_pose.h"
 #include "SEIF_neighbors.h"
+#include "SEIF_lidar_neighbors.h"
 #include "GT_measurement_ros.h"
 #include "EIFpairs_ros.h"
 #include "Camera.h"
@@ -98,6 +99,7 @@ int main(int argc, char **argv)
 	
 	Self_pose_EIF SEIF_pose;
 	Self_rel_EIF SEIF_neighbors;
+	Self_lidar_EIF SEIF_lidar_neighbors;
 	target_EIF teif(6);
 	HEIF_self sheif(6);
 	HEIF_target theif(6);
@@ -132,49 +134,50 @@ int main(int argc, char **argv)
 		SEIF_pose.computePredPairs(dt);
 		eif_ros.selfPredEIFpairs_pub.publish(eigen2EifMsg(SEIF_pose.getEIFData(), ID));
 		
-		SEIF_neighbors.setMavSelfData(mav_eigen);
-		SEIF_neighbors.setEIFpredData(SEIF_pose.getEIFData());
-		SEIF_neighbors.setmeasurements(gt_m.getCameraNeighbor());
-		SEIF_neighbors.setNeighborData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05));
+		SEIF_lidar_neighbors.setMavSelfData(mav_eigen);
+		SEIF_lidar_neighbors.setEIFpredData(SEIF_pose.getEIFData());
+		SEIF_lidar_neighbors.setLidarMeasurements(gt_m.getLidarMeasurements());
+		SEIF_lidar_neighbors.setNeighborData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05));
 		// -------------------------------------Target-------------------------------------
-		gt_m.bbox_check();
-		if(gt_m.ifCameraMeasure())
-		{
-			if(!teif.filter_init)
-				teif.setInitialState(gt_m.getBboxEigen());
-			teif.setCamera(cam);
-			teif.setMavSelfData(mav_eigen); 
-			teif.setMeasurement(gt_m.getBboxEigen());
-			teif.setSEIFpredData(SEIF_pose.getEIFData());
-		 	teif.computePredPairs(dt);
-		}
-		// if (!teif.filter_init)
-		// 	teif.setInitialState();
-		// teif.setMavSelfData(mav_eigen);	
-		// teif.setSEIFpredData(SEIF_pose.getEIFData());
-		// teif.setMeasurement(gt_m.get());
-		// teif.computePredPairs(dt);
+		gt_m.setCamera(cam);
+		teif.setCamera(cam);
+		teif.setMavSelfData(mav_eigen); 
+		teif.setMeasurement(gt_m.getCamera4target());
+		teif.setSEIFpredData(SEIF_pose.getEIFData());
+		teif.computePredPairs(dt);
+		// gt_m.bbox_check();
+		// if(gt_m.ifCameraMeasure())
+		// {
+		// 	if(!teif.filter_init)
+		// 		teif.setInitialState(gt_m.getBboxEigen());
+		// 	teif.setCamera(cam);
+		// 	teif.setMavSelfData(mav_eigen); 
+		// 	teif.setMeasurement(gt_m.getBboxEigen());
+		// 	teif.setSEIFpredData(SEIF_pose.getEIFData());
+		//  	teif.computePredPairs(dt);
+		// }
+
 		/*=================================================================================================================================
 			Correction
 		=================================================================================================================================*/
 		
 		// -------------------------------------Self-------------------------------------
 		SEIF_pose.computeCorrPairs();
-		SEIF_neighbors.computeCorrPairs();
+		SEIF_lidar_neighbors.computeCorrPairs();
 
 		// -------------------------------------Target-------------------------------------
-		if(gt_m.ifCameraMeasure())
-		{
+		// if(gt_m.ifCameraMeasure())
+		// {
 		 	teif.computeCorrPairs();
 			eif_ros.self2TgtEIFpairs_pub.publish(eigen2EifMsg(teif.getTgtData(), ID));
-		}
+		// }
 
 		/*=================================================================================================================================
 			Fusion
 		=================================================================================================================================*/
 		// -------------------------------------Self-------------------------------------
 		sheif.setSelfEstData(SEIF_pose.getEIFData());
-		sheif.setNeighborEstData(SEIF_neighbors.getEIFData());
+		sheif.setNeighborEstData(SEIF_lidar_neighbors.getEIFData());
 		sheif.process();
 		SEIF_pose.setFusionPairs(sheif.getFusedCov(), sheif.getFusedState());
 		
@@ -184,12 +187,12 @@ int main(int argc, char **argv)
 		// -------------------------------------Target-------------------------------------
 		std::vector<EIF_data> allTgtEIFData;
 		allTgtEIFData = eif_ros.get_curr_fusing_data(eif_ros.rbs2Tgt_EIFPairs, 0.05);
-		if(gt_m.ifCameraMeasure())
+		// if(gt_m.ifCameraMeasure())
 			allTgtEIFData.push_back(teif.getTgtData());
 		theif.setTargetEstData(allTgtEIFData);
 		theif.process();
-		if(gt_m.ifCameraMeasure())
-		{
+		// if(gt_m.ifCameraMeasure())
+		// {
 			teif.setFusionPairs(theif.getFusedCov(), theif.getFusedState(), ros::Time::now().toSec());
 			
 			// if(theif.QP_init(15, 2))
@@ -198,7 +201,7 @@ int main(int argc, char **argv)
 			// 	if(theif.computeQP());
 			// 		teif.setEstAcc(theif.getQpAcc());
 			// }
-		}
+		// }
 		std::cout << "TEIF:\n";
 		eif_ros.tgtState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[0], theif.getFusedState() , theif.getFusedCov(), gt_m.getGTorientation(ID)));
 

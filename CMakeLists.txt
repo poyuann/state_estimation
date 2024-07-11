@@ -181,6 +181,7 @@ add_library(EIF
    src/EIF_related/SEIF.cpp
    src/EIF_related/SEIF_pose.cpp
    src/EIF_related/SEIF_neighbors.cpp
+   src/EIF_related/SEIF_lidar_neighbors.cpp
    src/EIF_related/HEIF.cpp
    src/EIF_related/HEIF_self.cpp
    src/EIF_related/HEIF_target.cpp

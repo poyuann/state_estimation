@@ -41,7 +41,7 @@
                 <param name="targetTimeTol" value="$(arg targetTimeTol)"/>
                 <param name="pos_est" value="false"/>
 
-                <node name="synchronizer" pkg="state_estimation" type="self_msg_sync" ></node>
+                <node name="synchronizer" pkg="state_estimation" type="self_msg_sync"  output="screen"></node>
                 <node name="state_estimation" pkg="state_estimation" type="state_estimation" output="screen"></node>
         </group>
 </launch>

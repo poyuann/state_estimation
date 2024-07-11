@@ -8,7 +8,7 @@ Self_pose_EIF::Self_pose_EIF()
     measurement.setZero();
     //////////////////////// Covariance Tuning ////////////////////////
 
-    R = 1e-8*Eigen::MatrixXd::Identity(self_measurement_size, self_measurement_size);
+    R = 1e-5*Eigen::MatrixXd::Identity(self_measurement_size, self_measurement_size);
 }
 Self_pose_EIF::~Self_pose_EIF(){}
 

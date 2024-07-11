@@ -198,28 +198,27 @@ std::vector<Eigen::Vector4d> GT_measurement::Camera4Neighbor(std::vector<MAV_eig
 }
 Eigen::Vector3d GT_measurement::CameraMeasure4target(std::vector<MAV_eigen> formation_GT,MAV_eigen target_eigen, std::default_random_engine generator)
 {	
-	double fx = 1029.477219320806;
-    double fy = 1029.477219320806;
-	double cx = 960.5;
-	double cy = 540.5;
+
 	Eigen::Vector3d measurement;
 	Eigen::Matrix3d R_b2c ;
-	 R_b2c << 0, 1, 0,
-			0, 0, 1,
-			1, 0, 0;
+	R_b2c = cam.R_B2C();
 	Eigen::Matrix3d R_w2c = R_b2c*formation_GT[self_index].R_w2b; ///////////////// rotation problem
-	Eigen::Vector3d r_qc_c = R_w2c*(target_eigen.r - formation_GT[self_index].r); 
+	Eigen::Vector3d r_qc_c = R_w2c*(target_eigen.r - formation_GT[self_index].r - cam.t_B2C()); 
 
 	double X = r_qc_c(0)/r_qc_c(2);
 	double Y = r_qc_c(1)/r_qc_c(2);
 	double Z = r_qc_c(2);
 
-	measurement(0) = fx*X + cx;
-	measurement(1) = fy*Y + cy ;
+	measurement(0) = cam.fx()*X + cam.cx();
+	measurement(1) = cam.fy()*Y + cam.cy() ;
 	measurement(2) = Z;
 
 	return measurement;
 
+}
+void GT_measurement::setCamera(Camera camera)
+{
+	cam = camera;
 }
 std::vector<Eigen::Vector4d>GT_measurement::getCameraNeighbor(){return CameraModel;}
 Eigen::Vector3d GT_measurement::getCamera4target(){return  CameraModel4target;}

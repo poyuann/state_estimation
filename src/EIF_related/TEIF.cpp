@@ -62,6 +62,8 @@ void target_EIF::computeCorrPairs()
 	T.y.setZero();
 	self.s.setZero();
 	self.y.setZero();
+		// std::cout << "[u,d,v] : \n"<< T.z <<"\n\n";
+
 	if(T.z != T.pre_z && T.z(2) >= 2.0 && T.z(2) <= 12.0)
 	{
 		Eigen::MatrixXd R_hat, R_bar;

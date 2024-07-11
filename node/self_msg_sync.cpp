@@ -2,6 +2,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <cmath>
 
 #include <ros/ros.h>
 #include "ros/param.h"
@@ -109,13 +110,7 @@ void Image_process::sync_cb(const sensor_msgs::ImageConstPtr& ori_yolo,
 
   sync_img_yolo = *ori_yolo;
   sync_img_depth = *ori_depth;
-  reArrangeBbox(*ori_bbox);
-
-  /*
-  ROS_INFO("%s image_yolo stamp value is: %f", vehicle.c_str(), sync_img_yolo.header.stamp.toSec());
-  ROS_INFO("%s image_depth stamp value is: %f", vehicle.c_str(), sync_img_depth.header.stamp.toSec());
-  ROS_INFO("%s bbox_msg stamp value is: %f", vehicle.c_str(), sync_bbox_msgs.header.stamp.toSec());
-  */
+  reArrangeBbox(*ori_bbox);  
 
   sync_yolo_pub.publish(sync_img_yolo);
   sync_depth_pub.publish(sync_img_depth);
@@ -126,13 +121,17 @@ void Image_process::reArrangeBbox(yolov8_ros_msgs::BoundingBoxes bbox_msgs)
 {
   double u, v;
   vector<int> bbox_data;
-  bbox_data.push_back(bbox_msgs.bounding_boxes[0].xmin);
-  bbox_data.push_back(bbox_msgs.bounding_boxes[0].ymin);
-  bbox_data.push_back(bbox_msgs.bounding_boxes[0].xmax);
-  bbox_data.push_back(bbox_msgs.bounding_boxes[0].ymax);
+  if ( !bbox_msgs.bounding_boxes.empty())
+  {
+    bbox_data.push_back(bbox_msgs.bounding_boxes[0].xmin);
+    bbox_data.push_back(bbox_msgs.bounding_boxes[0].ymin);
+    bbox_data.push_back(bbox_msgs.bounding_boxes[0].xmax);
+    bbox_data.push_back(bbox_msgs.bounding_boxes[0].ymax);
+  }
   vector<double> reArrangeBbox_data;
 
-  if(bbox_data.size() > 0)
+  float depth = 0;
+  if( !bbox_data.empty())
   {
     for(int i = 0; i <bbox_data.size(); i+=bbox_col)
     {
@@ -140,7 +139,11 @@ void Image_process::reArrangeBbox(yolov8_ros_msgs::BoundingBoxes bbox_msgs)
       v = (double)(bbox_data[i+1] + bbox_data[i+3])/2;
       reArrangeBbox_data.push_back(u);
       reArrangeBbox_data.push_back(v);
-      reArrangeBbox_data.push_back(getDepth((int)u, (int)v));
+      depth = getDepth((int)u, (int)v);
+      if(isnan(depth))
+        reArrangeBbox_data.clear();  
+      else
+        reArrangeBbox_data.push_back(depth);
     }
     sync_bbox_msgs.data = reArrangeBbox_data;
   }
@@ -151,20 +154,11 @@ double Image_process::getDepth(int u, int v)
   float depth = 0;
   int n = 0;
   cv_bridge::CvImagePtr cv_ptr = cv_bridge::toCvCopy(sync_img_depth, sensor_msgs::image_encodings::TYPE_32FC1);
-  for(int i=-2; i< 1; i++)
-  {
-    for(int j=-1; j<2; j++)
-    {
-      if(cv_ptr->image.at<float>(v+i, u+j) < 6)
-      {
-        depth += cv_ptr->image.at<float>(v+i, u+j);
-        n++;
-      }
-        
-    }
-  }
-  depth /=n;
-  return static_cast<double>(depth);
+  if (u >= 0 && u < cv_ptr->image.cols && v >= 0 && v < cv_ptr->image.rows) {
+    depth = cv_ptr->image.at<float>(v, u); // Access depth value at (u, v)
+  } 
+  
+  return depth;
 }
 
 void Image_process::set_topic(string group_ns, int ID)
@@ -192,8 +186,6 @@ void Image_process::set_topic(string group_ns, int ID)
                           << bbox_output_topic << endl
                           << "===================================================================================================\n\n";
 }
-
-void Image_process::set_bbox_col(int col){bbox_col = col;}
 
 int main(int argc, char** argv)
 {
