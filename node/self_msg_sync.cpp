@@ -46,6 +46,8 @@ private:
   
 
   int bbox_col;
+  float cx;
+  float cy;
   bool start;
 
   void sync_cb(const sensor_msgs::ImageConstPtr& ori_yolo,
@@ -91,8 +93,9 @@ Image_process::Image_process(ros::NodeHandle &nh, string group_ns, int ID)
   //                                                  bbox_msg_sub));                                                   
   sync.registerCallback(boost::bind(&Image_process::sync_cb, this, _1, _2, _3));
 
-  bbox_col = 5;
-
+  bbox_col = 4;
+  cx = 320.5;
+  cy = 240.5;
   ros::spin();
 }
 
@@ -120,33 +123,40 @@ void Image_process::sync_cb(const sensor_msgs::ImageConstPtr& ori_yolo,
 void Image_process::reArrangeBbox(yolov8_ros_msgs::BoundingBoxes bbox_msgs)
 {
   double u, v;
-  vector<int> bbox_data;
+  float depth = 0;
+
+  // vector<int> bbox_data;
+  vector<int> temp;
+  vector<double> reArrangeBbox_data;
+  reArrangeBbox_data.clear();
   if ( !bbox_msgs.bounding_boxes.empty())
   {
-    bbox_data.push_back(bbox_msgs.bounding_boxes[0].xmin);
-    bbox_data.push_back(bbox_msgs.bounding_boxes[0].ymin);
-    bbox_data.push_back(bbox_msgs.bounding_boxes[0].xmax);
-    bbox_data.push_back(bbox_msgs.bounding_boxes[0].ymax);
-  }
-  vector<double> reArrangeBbox_data;
-
-  float depth = 0;
-  if( !bbox_data.empty())
-  {
-    for(int i = 0; i <bbox_data.size(); i+=bbox_col)
+    for (int i =0; i < bbox_msgs.bounding_boxes.size(); i++)
     {
-      u = (double)(bbox_data[i] + bbox_data[i+2])/2;
-      v = (double)(bbox_data[i+1] + bbox_data[i+3])/2;
-      reArrangeBbox_data.push_back(u);
-      reArrangeBbox_data.push_back(v);
-      depth = getDepth((int)u, (int)v);
-      if(isnan(depth))
-        reArrangeBbox_data.clear();  
-      else
-        reArrangeBbox_data.push_back(depth);
+      temp.push_back(bbox_msgs.bounding_boxes[i].xmin);
+      temp.push_back(bbox_msgs.bounding_boxes[i].ymin);
+      temp.push_back(bbox_msgs.bounding_boxes[i].xmax);
+      temp.push_back(bbox_msgs.bounding_boxes[i].ymax);
+      u = (double)(temp[0] + temp[2])/2;
+      v = (double)(temp[1] + temp[3])/2;
+      if (abs(u - cx) < 40 && abs(v - cy) < 40)
+      {
+
+        reArrangeBbox_data.push_back(u);
+        reArrangeBbox_data.push_back(v);
+        depth = getDepth((int)u, (int)v);
+        if(isnan(depth))
+          reArrangeBbox_data.clear();  
+        else
+          reArrangeBbox_data.push_back(depth);
+        if ( !reArrangeBbox_data.empty())  
+          break;
+      }
     }
-    sync_bbox_msgs.data = reArrangeBbox_data;
+    temp.clear();
   }
+  sync_bbox_msgs.data = reArrangeBbox_data;
+
 }
 
 double Image_process::getDepth(int u, int v)

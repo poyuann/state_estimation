@@ -7,12 +7,12 @@ target_EIF::target_EIF(int state_size)
 	target_measurement_size = 3;
 	filter_init = false;
 	EIF_data_init(target_state_size, target_measurement_size, &T);
-	Q.block(0, 0, 3, 3) = 1e-3*Eigen::MatrixXd::Identity(3, 3);
-	Q.block(3, 3, 3, 3) = 7e-2*Eigen::MatrixXd::Identity(3, 3);
+	Q.block(0, 0, 3, 3) = 5e-2*Eigen::MatrixXd::Identity(3, 3);
+	Q.block(3, 3, 3, 3) = 1e-1*Eigen::MatrixXd::Identity(3, 3);
 	// R = 1e-5*Eigen::MatrixXd::Identity(3, 3);
-    R(0, 0) = 4e-4;
-    R(1, 1) = 4e-4;
-    R(2, 2) = 3e-3;
+    R(0, 0) = 4e-2;
+    R(1, 1) = 4e-2;
+    R(2, 2) = 3e-1;
 	Mav_curr.v.setZero();
 }
 target_EIF::~target_EIF(){}
@@ -104,8 +104,8 @@ void target_EIF::computeCorrPairs()
 		self.s = self.H.transpose()*R_bar.inverse()*self.H;
 		self.y = self.H.transpose()*R_bar.inverse()*(self.z - self.h + self.H*self.X_hat);
 	}
-	T.P = (T.P_hat.inverse() + T.s).inverse();
-	T.X = T.P*(T.P_hat.inverse()*T.X_hat + T.y);
+	// T.P = (T.P_hat.inverse() + T.s).inverse();
+	// T.X = T.P*(T.P_hat.inverse()*T.X_hat + T.y);
 	T.pre_z = T.z;
 }
 

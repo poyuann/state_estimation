@@ -46,7 +46,20 @@ def information_matrix(robot):
     s = np.zeros([3, 3])
     for i in range(num):
         s += alpha * temp_s[i]
-    return 1/trace(s)  # Return the trace of the matrix to get a scalar value
+    return determinant3x3(s)  # Return the trace of the matrix to get a scalar value
+def determinant3x3(matrix):
+    a = matrix[0,0]
+    b = matrix[0,1]
+    c = matrix[0,2]
+    d = matrix[1,0]
+    e = matrix[1,1]
+    f = matrix[1,2]
+    g = matrix[2,0]
+    h = matrix[2,1]
+    i = matrix[2,2]
+    determinant = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
+
+    return determinant
 def agent_distance(uav1,uav2):
     dx = uav1[0] - uav2[0] 
     dy = uav1[1] - uav2[1]

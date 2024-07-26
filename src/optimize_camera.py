@@ -3,10 +3,11 @@ from casadi import *
 import math
 import matplotlib.pyplot as plt
 
+
 def partial_measure(state,gimbal):
-    dx = state[0] @ cos(state[2]) @ sin(state[1])
-    dy = state[0] @ cos(state[2]) @ cos(state[1])
-    dz = state[0] @ sin(state[2])
+    dx = state[0] * cos(state[2]) * sin(state[1])
+    dy = state[0] * cos(state[2]) * cos(state[1])
+    dz = state[0] * sin(state[2])
     h_w = vertcat(dx/dz,dy/dz,dz)
 
     fx = 960.5885501315905
@@ -27,7 +28,8 @@ def partial_measure(state,gimbal):
     #     print("Solver failed with message:", str(e))
     #     print("Debug values for x:", gimbal.debug.value(yaw))
     # get_R_w2c(sol.value(yaw),sol.value(pitch))
-    R_w2c = get_R_w2c(gimbal[0],gimbal[1])
+    theta = get_yaw(dx, dy)
+    R_w2c = get_R_w2c(gimbal[0], gimbal[1], theta)
     temp = R_w2c @ h_w
     X = temp[0]
     Y = temp[1]
@@ -44,7 +46,16 @@ def get_gimbal(yaw, pitch, h_w):
     print(h_w.size())
     X = R_w2c @ h_w
     return X[0]+ X[1]
-def get_R_w2c(yaw,pitch):
+def get_yaw(dx, dy):
+    yaw = atan2(dy, dx)
+    return yaw
+def get_R_w2c(yaw, pitch, theta):
+
+    R_w2b = vertcat(
+        horzcat(cos(theta), -sin(theta), 0),
+        horzcat(sin(theta), cos(theta), 0),
+        horzcat(0 , 0, 1),
+    )
     R_b2m = vertcat(
         horzcat(1, 0, 0),
         horzcat(0, -1, 0),
@@ -69,9 +80,14 @@ def get_R_w2c(yaw,pitch):
     R_w2c = R_t2c @ R_p2t @ R_m2p @ R_b2m
     return R_w2c
 def Distance(state):
-    dx = state[0] @ cos(state[2]) @ sin(state[1])
-    dy = state[0] @ cos(state[2]) @ cos(state[1])
-    dz = state[0] @ sin(state[2])
+    dx = state[0] * cos(state[2]) * sin(state[1])
+    dy = state[0] * cos(state[2]) * cos(state[1])
+    dz = state[0] * sin(state[2])
+
+    return dz
+def Distance_xy(state):
+    dx = state[0] * cos(state[2]) * sin(state[1])
+    dy = state[0] * cos(state[2]) * cos(state[1])
 
     return sqrt(dx**2 + dy**2)
 def gimbal_constrian(state, gimbal):
@@ -82,7 +98,7 @@ def gimbal_constrian(state, gimbal):
     Y = dy/dz
     Z = dz
 
-    return (-sin(gimbal[0])@X - cos(gimbal[1])@Y)    
+    return (-sin(gimbal[0])@X - cos(gimbal[0])@Y)    
 def gimbal_constrian2(state, gimbal):
     dx = state[0] @ cos(state[2]) @ sin(state[1])
     dy = state[0] @ cos(state[2]) @ cos(state[1])
@@ -106,7 +122,6 @@ def information_matrix(robot,gimbal):
     R[0,0] = 4e-2
     R[1,1] = 4e-2
     R[2,2] = 3e-1
-    print(R)
     num = 3
     temp_s = []
 
@@ -121,8 +136,22 @@ def information_matrix(robot,gimbal):
 
     s = np.zeros([3, 3])
     for i in range(num):
-        s += alpha * temp_s[i]
-    return 1/trace(s)  # Return the trace of the matrix to get a scalar value
+        s += (trace(temp_s[i])/alpha) * temp_s[i]
+    return 1/determinant3x3(s)  # Return the trace of the matrix to get a scalar value
+def determinant3x3(matrix):
+    a = matrix[0,0]
+    b = matrix[0,1]
+    c = matrix[0,2]
+    d = matrix[1,0]
+    e = matrix[1,1]
+    f = matrix[1,2]
+    g = matrix[2,0]
+    h = matrix[2,1]
+    i = matrix[2,2]
+    determinant = a * (e * i - f * h) - b * (d * i - f * g) + c * (d * h - e * g)
+
+    return determinant
+
 def plot_position_3D(optimal):
     fig = plt.figure()
     target = [0,0,10]
@@ -162,7 +191,7 @@ def uvd(state,gimbal):
     X = dx/dz
     Y = dy/dz
     Z = dz
-    u = -sin(gimbal[0])*X - cos(gimbal[1])*Y
+    u = -sin(gimbal[0])*X - cos(gimbal[0])*Y
     v = sin(gimbal[1])*cos(gimbal[0])*X - sin(gimbal[1])*sin(gimbal[0])*Y - cos(gimbal[1])*Z
     d = cos(gimbal[1])*cos(gimbal[0])*X - cos(gimbal[1])*sin(gimbal[0])*Y + sin(gimbal[1])*Z
     value = [u,v,d]
@@ -171,8 +200,7 @@ opti = casadi.Opti()
 num = 3
 
 # Define variables within the Opti context
-x = opti.variable(3, 3)  # 3 UAVs each with 3 coordinates (d, alpha, beta)
-# t = opti.variable(3)  # Target position with 3 coordinates (t1, t2, t3)
+x = opti.variable(3, 3)  # 3 UAVs each with 3 coordinates (distance, alpha, beta)
 gimbal = opti.variable(2,3)
 obj = information_matrix(x,gimbal)
 opti.minimize(obj)
@@ -182,14 +210,19 @@ uavs = coordinate(x)
 for i in range(num):
     opti.subject_to(x[0, i] > 3.0)
     opti.subject_to(x[0, i] < 5.0)
+    # opti.subject_to(Distance_xy(uavs[:,i]) > 2)
+    # opti.subject_to(Distance(uavs[:,i]) == 2)
+
 for i in range(num):
     opti.subject_to(x[1, i] < 2* pi)
     opti.subject_to(x[2, i] < 2* pi)
-
+    opti.subject_to(x[1, i] > 0)
+    opti.subject_to(x[2, i] > 0)
 for i in range(num):
     opti.subject_to(gimbal_constrian(x[:,i],gimbal[:,i]) == 0.0)
     opti.subject_to(gimbal_constrian2(x[:,i],gimbal[:,i]) == 0.0)
     opti.subject_to(gimbal_constrian3(x[:,i],gimbal[:,i]) >= 2.0)
+    opti.subject_to(gimbal_constrian3(x[:,i],gimbal[:,i]) < 10.0)
     opti.subject_to(gimbal[1, i] < pi*80/180)
     opti.subject_to(gimbal[1, i] > -pi*20/180)
     opti.subject_to(gimbal[0, i] < pi)
@@ -197,9 +230,12 @@ for i in range(num):
 opti.subject_to(agent_distance(uavs[0,:],uavs[1,:]) > 3.0)
 opti.subject_to(agent_distance(uavs[0,:],uavs[2,:]) > 3.0)
 opti.subject_to(agent_distance(uavs[1,:],uavs[2,:]) > 3.0)
+# for i in range(num):
+
+
 # Provide an initial guess for the variables
-initial_x = np.array([[3, 1, 1], [2, 3, 6], [1, 3, 6]])
-initial_g = np.array([[1,1,2],[0,2,2]])
+initial_x = np.array([[3, -1, 2], [2, -3, 2], [1, 3, 2]])
+initial_g = np.array([[1,1,2],[0,1,1]])
 opti.set_initial(x, initial_x)
 opti.set_initial(gimbal, initial_g)
 
@@ -220,6 +256,7 @@ while(debug):
         print("uav : ",coordinate(sol.value(x)))
         for i in range(3):
             print(i," :", uvd(sol.value(x)[:,i],sol.value(gimbal)[:,i]))
+        print(information_matrix(sol.value(x),sol.value(gimbal)))
         debug = False
     except RuntimeError as e:
         print("Solver failed with message:", str(e))
@@ -229,5 +266,4 @@ while(debug):
         initial_g = opti.debug.value(gimbal)
         opti.set_initial(x, initial_x)
         opti.set_initial(gimbal, initial_g)
-
 

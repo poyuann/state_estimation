@@ -124,7 +124,7 @@ EIF_data eifMsg2Eigen(state_estimation::EIFpairStamped eifMsg)
 	return est_object;
 }
 
-state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::MatrixXd est_p, geometry_msgs::Quaternion GT_ori)
+state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::MatrixXd est_p, geometry_msgs::Quaternion GT_ori, Eigen::MatrixXd s)
 {
 	Eigen::Vector3d E_p = GT.r - est.segment(0, 3);
 	Eigen::Vector3d E_v = GT.v - est.segment(3, 3);
@@ -132,7 +132,7 @@ state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::Matrix
 	
 
 
-	std::cout << "State: \n" << est << "\n\n";
+	// std::cout << "State: \n" << est_p.block(0, 0, 3, 3).determinant() << "\n\n";
 	std::cout << "RMS_p: " << E_p.norm() << "\nRMS_v: " << E_v.norm() << "\n\n";
 
 	Plot_data.header.stamp = ros::Time::now();
@@ -158,6 +158,6 @@ state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::Matrix
 	Plot_data.RMSE_p = E_p.norm();
 	Plot_data.RMSE_v = E_v.norm();
 	Plot_data.det_p = est_p.determinant();
-	// Plot_data.p = est_p;
+	Plot_data.tr_s = s.block(0, 0, 3, 3).determinant();
 	return Plot_data;
 }

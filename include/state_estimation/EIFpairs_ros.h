@@ -59,6 +59,6 @@ public:
 
 EIF_data eifMsg2Eigen(state_estimation::EIFpairStamped eifMsg);
 state_estimation::EIFpairStamped eigen2EifMsg(EIF_data est_object, int self_id);
-state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::MatrixXd est_p, geometry_msgs::Quaternion);
+state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::MatrixXd est_p, geometry_msgs::Quaternion , Eigen::MatrixXd);
 
 #endif

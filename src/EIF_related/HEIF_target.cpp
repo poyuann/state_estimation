@@ -23,16 +23,21 @@ void HEIF_target::setTargetEstData(std::vector<EIF_data> est_Data)
 void HEIF_target::TargetEstDataCI()
 {
 	double trace_sum = 0.0;
-
 	//////////////////////////// X_hat, P_hat ////////////////////////////
-    for(int i=0; i<fusionNum; i++)
-		trace_sum += 1/est_data[i].P_hat.trace();
-	for(int i=0; i<fusionNum; i++)
+    // for(int i=0; i<fusionNum; i++)
+	// 	trace_sum += est_data[i].P_hat.inverse().trace();
+	// for(int i=0; i<fusionNum; i++)
+	// {
+	// 	weight[i] = (est_data[i].P_hat.inverse().trace())/trace_sum;
+	// 	weightedOmega_hat += weight[i]*est_data[i].P_hat.inverse();
+	// 	weightedXi_hat += weight[i]*(est_data[i].P_hat.inverse()*est_data[i].X_hat);
+	// }
+	if(!fusionNum == 0)
 	{
-		weight[i] = 1/est_data[i].P_hat.trace()/trace_sum;
-		weightedOmega_hat += weight[i]*est_data[i].P_hat.inverse();
-		weightedXi_hat += weight[i]*(est_data[i].P_hat.inverse()*est_data[i].X_hat);
+		weightedOmega_hat = est_data[fusionNum-1].P_hat.inverse();
+		weightedXi_hat = weightedOmega_hat*est_data[fusionNum-1].X_hat;
 	}
+
 	//////////////////////////// s, y ////////////////////////////
 	for(int i=0; i<fusionNum; i++)
 		trace_sum += est_data[i].s.trace();
@@ -43,6 +48,7 @@ void HEIF_target::TargetEstDataCI()
 			weight[i] = est_data[i].s.trace()/trace_sum;
 			weightedS += weight[i]*est_data[i].s;
 			weightedY += weight[i]*est_data[i].y;
+			
 		}
 	}
 }
@@ -97,7 +103,7 @@ void HEIF_target::process()
 		TargetEstDataCI();
 	CI_combination();
 }
-
+Eigen::MatrixXd HEIF_target::getS(){return weightedS ;}
 /*=================================================================================================================================
 		Quadratic Programming
 =================================================================================================================================*/

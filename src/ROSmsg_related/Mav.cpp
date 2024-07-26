@@ -55,21 +55,18 @@ void MAV::groundTruth_cb(const gazebo_msgs::ModelStates::ConstPtr& msg)
     string prefix =  string("typhoon_h480") + to_string(id);
     for (int i = 0; i<name.size(); i++)
     {
-		if(std::isdigit(name[id+2].back())) ////// First one is ground, skip it
-		{
-            if(prefix == name[i])
-            {
-                setPose(msg->pose[i]);
-                setTwist(msg->twist[i]);
-                // std::cout << name[i]<<"\n"<<id <<"\n";
+        if(prefix == name[i])
+        {
+            setPose(msg->pose[i]);
+            setTwist(msg->twist[i]);
+            // std::cout << name[i]<<"\n"<<id <<"\n";
 
-            }
-            if(id==0 && string("iris0")== name[i])
-            {
-                setPose(msg->pose[i]);
-                setTwist(msg->twist[i]);
-            }
         }
+        if(id==0 && string("iris0")== name[i])
+        {
+            setPose(msg->pose[i]);
+            setTwist(msg->twist[i]);
+        }   
     }
 
 }

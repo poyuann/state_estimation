@@ -7,7 +7,8 @@ def extract_data(bag, topics):
     RMSE_v = []
     GT_poses = []
     est_poses = []
-    det_p= []
+    det_p = []
+    tr_s = []
     for topic, msg, t in bag.read_messages(topics):
     # Extract relevant data from the message
         timestamps.append(msg.header.stamp.to_sec())
@@ -16,7 +17,8 @@ def extract_data(bag, topics):
         GT_poses.append(msg.GT_pose)
         est_poses.append(msg.est_pose)
         det_p.append(msg.det_p)
-    return timestamps, GT_poses, est_poses, RMSE_p, RMSE_v, det_p
+        tr_s.append(msg.tr_s)
+    return timestamps, GT_poses, est_poses, RMSE_p, RMSE_v, det_p, tr_s
 
 
 
@@ -213,10 +215,10 @@ def plotFromBag(bag, name):
     E_x = []
     E_y = []
     E_z = []
-    timestamps1, EIF_1_GTpose, EIF_1_Estpose, EIF_1_RMSE_p, EIF_1_RMSE_v , EIF_1_det_p  = extract_data(bag, '/typhoon_h480_1/SHEIF/Plot')
-    timestamps2, EIF_2_GTpose, EIF_2_Estpose, EIF_2_RMSE_p, EIF_2_RMSE_v , EIF_2_det_p  = extract_data(bag, '/typhoon_h480_2/SHEIF/Plot')
-    timestamps3, EIF_3_GTpose, EIF_3_Estpose, EIF_3_RMSE_p, EIF_3_RMSE_v , EIF_3_det_p  = extract_data(bag, '/typhoon_h480_3/SHEIF/Plot')
-    timestampst, EIF_t_GTpose, EIF_t_Estpose, EIF_t_RMSE_p, EIF_t_RMSE_v , EIF_t_det_p = extract_data(bag, '/typhoon_h480_1/THEIF/Plot')
+    timestamps1, EIF_1_GTpose, EIF_1_Estpose, EIF_1_RMSE_p, EIF_1_RMSE_v , EIF_1_det_p ,_ = extract_data(bag, '/typhoon_h480_1/SHEIF/Plot')
+    timestamps2, EIF_2_GTpose, EIF_2_Estpose, EIF_2_RMSE_p, EIF_2_RMSE_v , EIF_2_det_p ,_ = extract_data(bag, '/typhoon_h480_2/SHEIF/Plot')
+    timestamps3, EIF_3_GTpose, EIF_3_Estpose, EIF_3_RMSE_p, EIF_3_RMSE_v , EIF_3_det_p ,_ = extract_data(bag, '/typhoon_h480_3/SHEIF/Plot')
+    timestampst, EIF_t_GTpose, EIF_t_Estpose, EIF_t_RMSE_p, EIF_t_RMSE_v , EIF_t_det_p ,_ = extract_data(bag, '/typhoon_h480_2/THEIF/Plot')
     # for (GTpose, Estpose) in zip(EIF_1_GTpose, EIF_1_Estpose):
         # E_x.append(abs(GTpose.position.x - Estpose.position.x))
         # E_y.append(abs(GTpose.position.y - Estpose.position.y))
@@ -249,8 +251,8 @@ def plotFromBag(bag, name):
     # plot_imu(timestamps3,EIF_3_GTpose, "iris_3")
     
     plot_det_p(timestampst, EIF_t_det_p, "target")
-    plot_det_p(timestamps1, EIF_1_det_p, "1")
-    plot_det_p(timestamps2, EIF_2_det_p, "2")
+    # plot_det_p(timestamps1, EIF_1_det_p, "1")
+    # plot_det_p(timestamps2, EIF_2_det_p, "2")
 
 def plot_combined_RMSE_p(RMSE_p1, label1, RMSE_p2, label2):
     plt.figure(figsize=(10, 6))
@@ -315,19 +317,18 @@ def plot_combine_det_p( det_p, det_p2, dataset_label, dataset_label2):
     # Cut the RMSE lists to match the new timestamps if necessary
     det_p = det_p[:min_length]
     det_p2 = det_p2[:min_length]
-
     average = sum(det_p)/len(det_p)
     average2 = sum(det_p2)/len(det_p2)  
     # print(average)
-    plt.scatter(timeStamps, det_p, label=f'trace(p) for {dataset_label}',color='orange')
-    plt.axhline(y=average, color='r', linestyle='--',label=f'Average trace(p): {average}')
+    plt.plot(timeStamps, det_p, label=f'{dataset_label}',color='orange')
+    plt.axhline(y=average, color='r', linestyle='--',label=f'Average {dataset_label}: {average}')
     # plt.text(timeStamps[int(len(timeStamps)/ 10)], average, f'Average : {average}', color='red')
-    plt.scatter(timeStamps, det_p2, label=f'trace(p) for {dataset_label2}',color='blue')
-    plt.axhline(y=average2, color='g', linestyle='--',label=f'Average trace(p): {average2}')
+    plt.plot(timeStamps, det_p2, label=f' {dataset_label2}',color='blue')
+    plt.axhline(y=average2, color='g', linestyle='--',label=f'Average {dataset_label2}: {average2}')
     # plt.text(timeStamps[int(len(timeStamps)/ 10)], average, f'Average : {average2}', color='red')    
     plt.xlabel('Time (seconds)')
     plt.ylabel('')
-    plt.title(f'target_trace(p)  (all uavs use gps)')
+    plt.title(f'target_det(p) (correct)')
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -337,8 +338,8 @@ def plotFromTwoBags(file1, file2, topic, label1, label2):
     bag2 = rosbag.Bag(file2)
 
     # Extract data from both bags
-    _, _, _, _, _,p1 = extract_data(bag1, topic)
-    _, _, _, _, _,p2 = extract_data(bag2, topic)
+    _, _, _, _, _,p1, trp1 = extract_data(bag1, topic)
+    _, _, _, _, _,p2, trp2 = extract_data(bag2, topic)
 
     # Close the bag files
     bag1.close()
@@ -348,13 +349,15 @@ def plotFromTwoBags(file1, file2, topic, label1, label2):
     # plot_combined_RMSE_p(RMSE_p1, label1, RMSE_p2, label2)
     # plot_combined_RMSE_v(RMSE_v1, label1, RMSE_v2, label2)
     plot_combine_det_p( p1, p2, label1, label2)
+    plot_combine_det_p( trp1, trp2, label1, label2)
+
 folder = '/home/py/eif_ws/src/state_estimation/bag/'
 
 file1 = folder + 'gimbal.bag'
 file2 = folder + 'worst.bag'
-# file2 = folder + 'lidar.bag'
+# file2 = folder + 'normal.bag'
 bag1 = rosbag.Bag(file1)
 bag2 = rosbag.Bag(file2)
 topic = '/typhoon_h480_2/THEIF/Plot'
 plotFromTwoBags(file1, file2, topic, 'optimal', 'worst case')
-# plotFromBag(bag1, 'THEIF, Only one neigbor robots has absolute position rate 5hz')
+plotFromBag(bag1, 'THEIF, Only one neigbor robots has absolute position rate 5hz')
