@@ -56,3 +56,5 @@ void HEIF_self::process()
 		eighborEstDataCI();
 	CI_combination();
 }
+
+Eigen::MatrixXd HEIF_self::getS(){ return weightedS;}

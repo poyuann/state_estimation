@@ -22,5 +22,6 @@ public:
 	void eighborEstDataCI();
 	void CI_combination();
 	void process();
+	Eigen::MatrixXd getS();
 };
 #endif

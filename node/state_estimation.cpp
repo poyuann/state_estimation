@@ -134,10 +134,10 @@ int main(int argc, char **argv)
 		SEIF_pose.computePredPairs(dt);
 		eif_ros.selfPredEIFpairs_pub.publish(eigen2EifMsg(SEIF_pose.getEIFData(), ID));
 		
-		// SEIF_neighbors.setMavSelfData(mav_eigen);
-		// SEIF_neighbors.setEIFpredData(SEIF_pose.getEIFData());
-		// SEIF_neighbors.setmeasurements(gt_m.getCameraNeighbor());
-		// SEIF_neighbors.setNeighborData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05));
+		SEIF_neighbors.setMavSelfData(mav_eigen);
+		SEIF_neighbors.setEIFpredData(SEIF_pose.getEIFData());
+		SEIF_neighbors.setmeasurements(gt_m.getCameraNeighbor());
+		SEIF_neighbors.setNeighborData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05));
 		// -------------------------------------Target-------------------------------------
 		gt_m.setCamera(cam);
 		teif.setCamera(cam);
@@ -166,7 +166,7 @@ int main(int argc, char **argv)
 		
 		// -------------------------------------Self-------------------------------------
 		SEIF_pose.computeCorrPairs();
-		// SEIF_neighbors.computeCorrPairs();
+		SEIF_neighbors.computeCorrPairs();
 
 		// -------------------------------------Target-------------------------------------
 		teif.computeCorrPairs();
@@ -185,12 +185,12 @@ int main(int argc, char **argv)
 		=================================================================================================================================*/
 		// -------------------------------------Self-------------------------------------
 		sheif.setSelfEstData(SEIF_pose.getEIFData());
-		// sheif.setNeighborEstData(SEIF_neighbors.getEIFData());
+		sheif.setNeighborEstData(SEIF_neighbors.getEIFData());
 		sheif.process();
 		SEIF_pose.setFusionPairs(sheif.getFusedCov(), sheif.getFusedState());
 		
 		std::cout << "SEIF:\n";
-		eif_ros.selfState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[ID], sheif.getFusedState() , sheif.getFusedCov(), gt_m.getGTorientation(ID),sheif.getFusedCov()));
+		eif_ros.selfState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[ID], sheif.getFusedState() , sheif.getFusedCov(), gt_m.getGTorientation(ID),sheif.getS()));
 		
 		// -------------------------------------Target-------------------------------------
 		std::vector<EIF_data> allTgtEIFData;

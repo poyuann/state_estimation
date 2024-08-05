@@ -7,4 +7,4 @@ float64 RMSE_p
 float64 RMSE_v
 float64 det_p
 float64 tr_s
-float64 tr_omega
+float64 tr_ome

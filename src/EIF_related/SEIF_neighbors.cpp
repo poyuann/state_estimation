@@ -47,11 +47,20 @@ EIF_data Self_rel_EIF::computeCorrPair(Eigen::Vector4d CM, EIF_data& neighbor)
     {
         Eigen::MatrixXd R_hat;
 		Eigen::Matrix3d R_b2c ;
+        double yaw;
+        Eigen::Matrix3d temp;
+    	Eigen::Vector3d q;
+    	q = Mav_eigen_self.q.toRotationMatrix().eulerAngles(2, 1, 0);
+
 		R_b2c << 0, 1, 0,
 				0, 0, 1,
 				1, 0, 0;
-                
-		Eigen::Matrix3d R_w2c = R_b2c*Mav_eigen_self.R_w2b; ///////////////// rotation problem
+        yaw = atan2(neighbor.X_hat(1) - self.X_hat(1), neighbor.X_hat(0) - self.X_hat(0));
+        yaw += -q(0);
+        temp << cos(yaw), -sin(yaw), 0,
+                sin(yaw), cos(yaw), 0,
+                0, 0, 1;                
+		Eigen::Matrix3d R_w2c = temp * R_b2c*Mav_eigen_self.R_w2b; ///////////////// rotation problem
 		Eigen::Vector3d r_qc_c = R_w2c*(neighbor.X_hat.segment(0, 3) - self.X_hat.segment(0, 3)); 
 
 		X = r_qc_c(0)/r_qc_c(2);

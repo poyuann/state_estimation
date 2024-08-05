@@ -240,8 +240,8 @@ def plotFromBag(bag, name):
 
     # plot_RMSE_p(timestamps1, EIF_1_RMSE_p, "1")
     # plot_RMSE_v(timestamps1, EIF_1_RMSE_v, "1")
-    # plot_RMSE_p(timestamps2, EIF_2_RMSE_p, "2")
-    # plot_RMSE_v(timestamps2, EIF_2_RMSE_v, "2")
+    plot_RMSE_p(timestamps2, EIF_2_RMSE_p, "2")
+    plot_RMSE_v(timestamps2, EIF_2_RMSE_v, "2")
     # plot_RMSE_p(timestamps3, EIF_3_RMSE_p, "3")
     # plot_RMSE_v(timestamps3, EIF_3_RMSE_v, "3")
     plot_RMSE_p(timestampst, EIF_t_RMSE_p, "target")
@@ -265,10 +265,11 @@ def plot_combined_RMSE_p(RMSE_p1, label1, RMSE_p2, label2):
     # Cut the RMSE lists to match the new timestamps if necessary
     RMSE_p1 = RMSE_p1[:min_length]
     RMSE_p2 = RMSE_p2[:min_length]
+    
     average_RMSE_p1 = sum(RMSE_p1) / len(RMSE_p1)
     average_RMSE_p2 = sum(RMSE_p2) / len(RMSE_p2)
 
-
+    
     # Plot
     plt.plot(timeStamps1, RMSE_p1, label=f'Position RMSE for {label1}')
     plt.plot(timeStamps2, RMSE_p2, label=f'Position RMSE for {label2}')
@@ -307,7 +308,7 @@ def plot_combined_RMSE_v(RMSE_v1, label1, RMSE_v2, label2):
     plt.grid(True)
     plt.show()
 
-def plot_combine_det_p( det_p, det_p2, dataset_label, dataset_label2):
+def plot_combine_det_p( det_p, det_p2, dataset_label, dataset_label2 ,label3):
     plt.figure(figsize = (10,6))
     min_length = min(len(det_p), len(det_p2))
     timeStamps = list(range(min_length))  # Creating a list from 0 to min_length
@@ -328,7 +329,7 @@ def plot_combine_det_p( det_p, det_p2, dataset_label, dataset_label2):
     # plt.text(timeStamps[int(len(timeStamps)/ 10)], average, f'Average : {average2}', color='red')    
     plt.xlabel('Time (seconds)')
     plt.ylabel('')
-    plt.title(f'target_det(p) (correct)')
+    plt.title(f'combine_det({label3}) ')
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -338,8 +339,8 @@ def plotFromTwoBags(file1, file2, topic, label1, label2):
     bag2 = rosbag.Bag(file2)
 
     # Extract data from both bags
-    _, _, _, _, _,p1, trp1 = extract_data(bag1, topic)
-    _, _, _, _, _,p2, trp2 = extract_data(bag2, topic)
+    _, _, _, RMSE_p1, RMSE_v1, p1, detS1 = extract_data(bag1, topic)
+    _, _, _, RMSE_p2, RMSE_v2, p2, detS2 = extract_data(bag2, topic)
 
     # Close the bag files
     bag1.close()
@@ -348,8 +349,53 @@ def plotFromTwoBags(file1, file2, topic, label1, label2):
     # Plot combined RMSE for position from both bags with normalized time steps
     # plot_combined_RMSE_p(RMSE_p1, label1, RMSE_p2, label2)
     # plot_combined_RMSE_v(RMSE_v1, label1, RMSE_v2, label2)
-    plot_combine_det_p( p1, p2, label1, label2)
-    plot_combine_det_p( trp1, trp2, label1, label2)
+    plot_combine_det_p( p1, p2, label1, label2 , 'p')
+    plot_combine_det_p( detS1, detS2, label1, label2, 'S')
+    plot_combined_RMSE_p( RMSE_p1, label1, RMSE_p2 , label2)
+    plot_combined_RMSE_v( RMSE_v1, label1, RMSE_v2 , label2)
+def get_pi_det(p1, p2, p3, p4):
+    min_length = min(len(p1), len(p2), len(p3), len(p4))
+    p1 = p1[: min_length]
+    p2 = p2[: min_length]
+    p3 = p3[: min_length]
+    p4 = p4[: min_length]
+    p_pi = []
+    for i in range(len(p1)):
+        p_pi.append(p1[i]* p2[i]* p3[i]* p4[i])
+    return p_pi
+def plot_pi_det(file1, file2, label1, label2):
+    bag1 = rosbag.Bag(file1)
+    bag2 = rosbag.Bag(file2)
+
+    # Extract data from both bags
+    _, _, _, _, _,p1_1, s1_1 = extract_data(bag1, '/typhoon_h480_1/SHEIF/Plot')
+    _, _, _, _, _,p1_2, s1_2 = extract_data(bag1, '/typhoon_h480_2/SHEIF/Plot')
+    _, _, _, _, _,p1_3, s1_3 = extract_data(bag1, '/typhoon_h480_3/SHEIF/Plot')
+    _, _, _, _, _,p1_t, s1_t = extract_data(bag1, '/typhoon_h480_2/THEIF/Plot')
+
+    _, _, _, _, _,p2_1, s2_1 = extract_data(bag2, '/typhoon_h480_1/SHEIF/Plot')
+    _, _, _, _, _,p2_2, s2_2 = extract_data(bag2, '/typhoon_h480_2/SHEIF/Plot')
+    _, _, _, _, _,p2_3, s2_3 = extract_data(bag2, '/typhoon_h480_3/SHEIF/Plot')
+    _, _, _, _, _,p2_t, s2_t = extract_data(bag2, '/typhoon_h480_2/THEIF/Plot')
+
+    # Close the bag files
+    bag1.close()
+    bag2.close()
+
+    p_pi_1 = []
+    p_pi_2 = []
+
+    s_pi_1 = []
+    s_pi_2 = []
+
+    p_pi_1 = get_pi_det(p1_1, p1_2, p1_3, p1_t)
+    p_pi_2 = get_pi_det(p2_1, p2_2, p2_3, p2_t)
+    s_pi_1 = get_pi_det(s1_1, s1_2, s1_3, s1_t)
+    s_pi_2 = get_pi_det(s2_1, s2_2, s2_3, s2_t)
+
+    plot_combine_det_p(p_pi_1, p_pi_2, label1, label2, 'p')
+    plot_combine_det_p(s_pi_1, s_pi_2, label1, label2, 'S')
+
 
 folder = '/home/py/eif_ws/src/state_estimation/bag/'
 
@@ -360,4 +406,11 @@ bag1 = rosbag.Bag(file1)
 bag2 = rosbag.Bag(file2)
 topic = '/typhoon_h480_2/THEIF/Plot'
 plotFromTwoBags(file1, file2, topic, 'optimal', 'worst case')
-plotFromBag(bag1, 'THEIF, Only one neigbor robots has absolute position rate 5hz')
+topic = '/typhoon_h480_1/SHEIF/Plot'
+plotFromTwoBags(file1, file2, topic, 'optimal', 'worst case')
+topic = '/typhoon_h480_2/SHEIF/Plot'
+plotFromTwoBags(file1, file2, topic, 'optimal', 'worst case')
+topic = '/typhoon_h480_3/SHEIF/Plot'
+plotFromTwoBags(file1, file2, topic, 'optimal', 'worst case')
+plot_pi_det(file1, file2, 'optimal', 'worst case')
+# plotFromBag(bag1, 'THEIF, Only one neigbor robots has absolute position rate 5hz')

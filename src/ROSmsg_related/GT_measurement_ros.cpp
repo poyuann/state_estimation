@@ -19,7 +19,7 @@ GT_measurement::GT_measurement(ros::NodeHandle& nh_, int id, int mavnum)
 	/*=================================================================================================================================
         Lidar, position
     ===============================================================================================================================*/
-	lidar_rate = 50;
+	lidar_rate = 100;
 	position_rate = 50;
 
 	/*=================================================================================================================================
@@ -170,17 +170,26 @@ std::vector<Eigen::Vector4d> GT_measurement::Camera4Neighbor(std::vector<MAV_eig
 	std::vector<Eigen::Vector4d> measurements;
 
 	Eigen::Matrix3d R_b2c ;
+	Eigen::Matrix3d temp;
 	 R_b2c << 0, 1, 0,
 			0, 0, 1,
 			1, 0, 0;
+	double yaw;
 	Eigen::Matrix3d R_w2c = R_b2c*formation_GT[self_index].R_w2b; ///////////////// rotation problem
 	Eigen::Vector3d r_qc_c;
+	Eigen::Vector3d q;
+	q = formation_GT[self_index].q.toRotationMatrix().eulerAngles(2, 1, 0);
 	for(int i=0; i<formation_num; i++)
 	{
 		if(i != self_index)
 		{
+			yaw = atan2(formation_GT[i].r(1) - formation_GT[self_index].r(1),formation_GT[i].r(0) - formation_GT[self_index].r(0));
+			yaw += -q(0);
+			temp << cos(yaw), -sin(yaw), 0,
+					sin(yaw), cos(yaw), 0,
+					0, 0, 1;
+			R_w2c = temp * R_b2c * formation_GT[self_index].R_w2b;
 			r_qc_c= R_w2c*(formation_GT[i].r - formation_GT[self_index].r); 
-
 			X = r_qc_c(0)/r_qc_c(2);
 			Y = r_qc_c(1)/r_qc_c(2);
 			Z = r_qc_c(2);
