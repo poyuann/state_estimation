@@ -9,12 +9,32 @@ HEIF_self::~HEIF_self(){}
 
 void HEIF_self::setNeighborEstData(std::vector<EIF_data> est_Data)
 {
-	self_est_neighbor.insert(self_est_neighbor.end(), est_Data.begin(), est_Data.end());
 	fusionNum = 0;
+	self_est_neighbor.insert(self_est_neighbor.end(), est_Data.begin(), est_Data.end());
 	fusionNum = self_est_neighbor.size();
     weight.resize(fusionNum);
 }
+void HEIF_self::set_passiveEstData(std::vector<EIF_data> est_Data, int self_id)
+{
+	for(int i=0; i< est_Data.size(); i++)
+	{
+		for(int j=0; j< est_Data[i].passive_id.size(); j++)
+		{
+			if (est_Data[i].passive_id[j] == self_id)
+			{	
+				est_Data[i].s = est_Data[i].passive_s[j];
+				est_Data[i].y = est_Data[i].passive_y[j];
 
+				self_est_neighbor.push_back(est_Data[i]);
+				
+				break;
+			}
+		}
+	}
+	fusionNum = self_est_neighbor.size();
+    weight.resize(fusionNum);
+
+}
 void HEIF_self::setSelfEstData(EIF_data self)
 {
 	self_est = self;

@@ -2,12 +2,12 @@
 
 Camera::Camera()
 {
-    fx_ = 1029.477219320806;
-    fy_ = 1029.477219320806;
-    cx_ = 960.5;
-    cy_ = 540.5;
-    lx_ = 1280;
-    ly_ = 960;
+    fx_ = 343.15907310693535;
+    fy_ = 343.15907310693535;
+    cx_ = 320.5;
+    cy_ = 240.5;
+    lx_ = 640;
+    ly_ = 480;
 
 	t_b2c.setZero();
 	R_b2c.setIdentity();
@@ -60,6 +60,10 @@ void Camera::jointState_cb(const sensor_msgs::JointState::ConstPtr& msg)
     roll = msg->position[0];
     pitch = msg->position[1];
     yaw = msg->position[2];
+    angular_vel(0) = msg->velocity[0];
+    angular_vel(1) = msg->velocity[1];
+    angular_vel(2) = msg->velocity[2];
+
 
     R_m2p << cos(yaw), sin(yaw), 0,
             -sin(yaw), cos(yaw), 0,
@@ -69,6 +73,7 @@ void Camera::jointState_cb(const sensor_msgs::JointState::ConstPtr& msg)
             sin(pitch), 0, cos(pitch);
 
     R_b2c = R_t2c*R_p2t*R_m2p*R_b2m;
+    
 }
 
 
@@ -79,7 +84,10 @@ void Camera::setParameters(double f_x, double f_y, double c_x, double c_y)
     cx_ = c_x;
     cy_ = c_y;
 }
-
+void Camera::setCamera(Eigen::Matrix3d R_m2p)
+{   
+    R_b2c = R_t2c * R_m2p * R_b2m;
+}
 double Camera::fx(){return fx_;}
 double Camera::fy(){return fy_;}
 double Camera::cx(){return cx_;}

@@ -23,6 +23,9 @@ struct EIF_data
     Eigen::MatrixXd Omega;
     Eigen::MatrixXd Omega_hat;
     
+    std::vector<Eigen::MatrixXd> passive_s;
+    std::vector<Eigen::VectorXd> passive_y;
+    std::vector<int> passive_id;
     int ID;
 };
 

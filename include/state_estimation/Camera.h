@@ -31,12 +31,15 @@ private:
     double pitch;
     double yaw;
 
+    Eigen::Vector3d angular_vel;
+
 public:
     
     Camera();
     Camera(ros::NodeHandle &nh_, bool gimbal);
     ~Camera();
     void setParameters(double f_x, double f_y, double c_x, double c_y);
+    void setCamera(Eigen::Matrix3d R_B2C);
     double fx();
     double fy();
     double cx();

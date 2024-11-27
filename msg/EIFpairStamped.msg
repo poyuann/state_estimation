@@ -5,4 +5,6 @@ float64[] P_hat
 float64[] X_hat
 float64[] s
 float64[] y
-
+int32[] passive_id
+float64[] passive_s
+float64[] passive_y

@@ -18,6 +18,7 @@ public:
 	HEIF_self(int x_size);
 	~HEIF_self();
 	void setNeighborEstData(std::vector<EIF_data> est_Data);
+	void set_passiveEstData(std::vector<EIF_data> est_Data, int );
 	void setSelfEstData(EIF_data self);
 	void eighborEstDataCI();
 	void CI_combination();

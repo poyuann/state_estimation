@@ -232,25 +232,25 @@ def plotFromBag(bag, name):
     #             , EIF_t_GTpose, EIF_t_Estpose
     #             , new_bool)
     
-    plot_combined_position_3D(EIF_1_GTpose, EIF_1_Estpose
-                               , EIF_2_GTpose, EIF_2_Estpose
-                               , EIF_3_GTpose, EIF_3_Estpose)
+    # plot_combined_position_3D(EIF_1_GTpose, EIF_1_Estpose
+    #                            , EIF_2_GTpose, EIF_2_Estpose
+    #                            , EIF_3_GTpose, EIF_3_Estpose)
     
     plot_target_position_3D(EIF_t_GTpose, EIF_t_Estpose)
 
     # plot_RMSE_p(timestamps1, EIF_1_RMSE_p, "1")
     # plot_RMSE_v(timestamps1, EIF_1_RMSE_v, "1")
-    plot_RMSE_p(timestamps2, EIF_2_RMSE_p, "2")
-    plot_RMSE_v(timestamps2, EIF_2_RMSE_v, "2")
+    # plot_RMSE_p(timestamps2, EIF_2_RMSE_p, "2")
+    # plot_RMSE_v(timestamps2, EIF_2_RMSE_v, "2")
     # plot_RMSE_p(timestamps3, EIF_3_RMSE_p, "3")
     # plot_RMSE_v(timestamps3, EIF_3_RMSE_v, "3")
-    plot_RMSE_p(timestampst, EIF_t_RMSE_p, "target")
-    plot_RMSE_v(timestampst, EIF_t_RMSE_v, "target")
+    # plot_RMSE_p(timestampst, EIF_t_RMSE_p, "target")
+    # plot_RMSE_v(timestampst, EIF_t_RMSE_v, "target")
     # plot_imu(timestamps1,EIF_1_GTpose, "iris_1")
     # plot_imu(timestamps2,EIF_2_GTpose, "iris_2")
     # plot_imu(timestamps3,EIF_3_GTpose, "iris_3")
     
-    plot_det_p(timestampst, EIF_t_det_p, "target")
+    # plot_det_p(timestampst, EIF_t_det_p, "target")
     # plot_det_p(timestamps1, EIF_1_det_p, "1")
     # plot_det_p(timestamps2, EIF_2_det_p, "2")
 
@@ -271,13 +271,13 @@ def plot_combined_RMSE_p(RMSE_p1, label1, RMSE_p2, label2):
 
     
     # Plot
-    plt.plot(timeStamps1, RMSE_p1, label=f'Position RMSE for {label1}')
-    plt.plot(timeStamps2, RMSE_p2, label=f'Position RMSE for {label2}')
-    plt.axhline(y=average_RMSE_p1, color='b', linestyle='--', label=f'Average RMSE: {average_RMSE_p1:.3f} ({label1})')
-    plt.axhline(y=average_RMSE_p2, color='r', linestyle='--', label=f'Average RMSE: {average_RMSE_p2:.3f} ({label2})')
+    plt.plot(timeStamps1, RMSE_p1, label=f'Position RMSE for {label1}', color='orange')
+    plt.plot(timeStamps2, RMSE_p2, label=f'Position RMSE for {label2}', color='blue')
+    plt.axhline(y=average_RMSE_p1, color='r', linestyle='--', label=f'Average RMSE: {average_RMSE_p1:.3f} ({label1})')
+    plt.axhline(y=average_RMSE_p2, color='b', linestyle='--', label=f'Average RMSE: {average_RMSE_p2:.3f} ({label2})')
     plt.xlabel('Normalized Time Steps')
     plt.ylabel('Position RMSE (m)')
-    plt.title('Combined Position RMSE')
+    plt.title('UAV3 Position RMSE')
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -297,10 +297,10 @@ def plot_combined_RMSE_v(RMSE_v1, label1, RMSE_v2, label2):
     average_RMSE_v2 = sum(RMSE_v2) / len(RMSE_v2)
 
     # Plot
-    plt.plot(timeStamps1, RMSE_v1, label=f'Velocity RMSE for {label1}')
-    plt.plot(timeStamps2, RMSE_v2, label=f'Velocity RMSE for {label2}')
-    plt.axhline(y=average_RMSE_v1, color='b', linestyle='--', label=f'Average RMSE: {average_RMSE_v1:.3f} ({label1})')
-    plt.axhline(y=average_RMSE_v2, color='r', linestyle='--', label=f'Average RMSE: {average_RMSE_v2:.3f} ({label2})')
+    plt.plot(timeStamps1, RMSE_v1, label=f'Velocity RMSE for {label1}', color='orange')
+    plt.plot(timeStamps2, RMSE_v2, label=f'Velocity RMSE for {label2}', color='blue')
+    plt.axhline(y=average_RMSE_v1, color='r', linestyle='--', label=f'Average RMSE: {average_RMSE_v1:.3f} ({label1})')
+    plt.axhline(y=average_RMSE_v2, color='b', linestyle='--', label=f'Average RMSE: {average_RMSE_v2:.3f} ({label2})')
     plt.xlabel('Normalized Time Steps')
     plt.ylabel('Velocity RMSE (m)')
     plt.title('Velocity RMSE')
@@ -327,9 +327,9 @@ def plot_combine_det_p( det_p, det_p2, dataset_label, dataset_label2 ,label3):
     plt.plot(timeStamps, det_p2, label=f' {dataset_label2}',color='blue')
     plt.axhline(y=average2, color='g', linestyle='--',label=f'Average {dataset_label2}: {average2}')
     # plt.text(timeStamps[int(len(timeStamps)/ 10)], average, f'Average : {average2}', color='red')    
-    plt.xlabel('Time (seconds)')
+    plt.xlabel('Normalized Time Steps')
     plt.ylabel('')
-    plt.title(f'combine_det({label3}) ')
+    plt.title(f'UAV1 det({label3}) ')
     plt.legend()
     plt.grid(True)
     plt.show()
@@ -349,19 +349,19 @@ def plotFromTwoBags(file1, file2, topic, label1, label2):
     # Plot combined RMSE for position from both bags with normalized time steps
     # plot_combined_RMSE_p(RMSE_p1, label1, RMSE_p2, label2)
     # plot_combined_RMSE_v(RMSE_v1, label1, RMSE_v2, label2)
-    plot_combine_det_p( p1, p2, label1, label2 , 'p')
-    plot_combine_det_p( detS1, detS2, label1, label2, 'S')
+    # plot_combine_det_p( p1, p2, label1, label2 , 'p')
+    # plot_combine_det_p( detS1, detS2, label1, label2, 'S')
     plot_combined_RMSE_p( RMSE_p1, label1, RMSE_p2 , label2)
-    plot_combined_RMSE_v( RMSE_v1, label1, RMSE_v2 , label2)
+    # plot_combined_RMSE_v( RMSE_v1, label1, RMSE_v2 , label2)
 def get_pi_det(p1, p2, p3, p4):
-    min_length = min(len(p1), len(p2), len(p3), len(p4))
+    min_length = min(len(p1), len(p2), len(p3))
     p1 = p1[: min_length]
     p2 = p2[: min_length]
     p3 = p3[: min_length]
     p4 = p4[: min_length]
     p_pi = []
     for i in range(len(p1)):
-        p_pi.append(p1[i]* p2[i]* p3[i]* p4[i])
+        p_pi.append(p1[i]* p2[i]* p3[i])
     return p_pi
 def plot_pi_det(file1, file2, label1, label2):
     bag1 = rosbag.Bag(file1)
@@ -399,18 +399,21 @@ def plot_pi_det(file1, file2, label1, label2):
 
 folder = '/home/py/eif_ws/src/state_estimation/bag/'
 
-file1 = folder + 'gimbal.bag'
-file2 = folder + 'worst.bag'
-# file2 = folder + 'normal.bag'
+# file1 = folder + 'gimbal.bag'
+file2 = folder + 'passive.bag'
+file1 = folder + 'passive2.bag'
+# file2 = folder + 'test.bag'
 bag1 = rosbag.Bag(file1)
 bag2 = rosbag.Bag(file2)
-topic = '/typhoon_h480_2/THEIF/Plot'
-plotFromTwoBags(file1, file2, topic, 'optimal', 'worst case')
+# topic = '/typhoon_h480_2/THEIF/Plot'
+# plotFromTwoBags(file1, file2, topic, 'optimal', 'worst case')
+name1 = 'include passive measurement'
+name2 = 'origin'
 topic = '/typhoon_h480_1/SHEIF/Plot'
-plotFromTwoBags(file1, file2, topic, 'optimal', 'worst case')
+plotFromTwoBags(file1, file2, topic, name1, name2)
 topic = '/typhoon_h480_2/SHEIF/Plot'
-plotFromTwoBags(file1, file2, topic, 'optimal', 'worst case')
+plotFromTwoBags(file1, file2, topic, name1, name2)
 topic = '/typhoon_h480_3/SHEIF/Plot'
-plotFromTwoBags(file1, file2, topic, 'optimal', 'worst case')
-plot_pi_det(file1, file2, 'optimal', 'worst case')
-# plotFromBag(bag1, 'THEIF, Only one neigbor robots has absolute position rate 5hz')
+plotFromTwoBags(file1, file2, topic, name1, name2)
+# plot_pi_det(file1, file2, 'optimal', 'worst case')
+# plotFromBag(bag1, 'test')

@@ -37,7 +37,7 @@ void target_EIF::setMeasurement(Eigen::Vector3d bBox){boundingBox = bBox;}
 void target_EIF::setSEIFpredData(EIF_data self_data)
 {
 	self = self_data;
-	self.X_hat.segment(0, 3) = self.X_hat.segment(0, 3) + Mav_eigen_self.R_w2b*cam.t_B2C(); ///???????????????????
+	self.X_hat.segment(0, 3) = self.X_hat.segment(0, 3) + Mav_eigen_self.R_w2b * cam.t_B2C();///???????????????????
 }
 
 void target_EIF::computePredPairs(double delta_t)
@@ -101,8 +101,8 @@ void target_EIF::computeCorrPairs()
 		T.s = T.H.transpose()*R_hat.inverse()*T.H;
 		T.y = T.H.transpose()*R_hat.inverse()*(T.z - T.h + T.H*T.X_hat);
 
-		self.s = self.H.transpose()*R_bar.inverse()*self.H;
-		self.y = self.H.transpose()*R_bar.inverse()*(self.z - self.h + self.H*self.X_hat);
+		// self.s = self.H.transpose()*R_bar.inverse()*self.H;
+		// self.y = self.H.transpose()*R_bar.inverse()*(self.z - self.h + self.H*self.X_hat);
 	}
 	// T.P = (T.P_hat.inverse() + T.s).inverse();
 	// T.X = T.P*(T.P_hat.inverse()*T.X_hat + T.y);

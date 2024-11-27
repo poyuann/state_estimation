@@ -100,7 +100,25 @@ state_estimation::EIFpairStamped eigen2EifMsg(EIF_data est_object, int self_id)
 	std::vector<double> X_hat_vec(est_object.X_hat.data(), est_object.X_hat.data() + est_object.X_hat.size());
 	std::vector<double> s_vec(est_object.s.data(), est_object.s.data() + est_object.s.size());
 	std::vector<double> y_vec(est_object.y.data(), est_object.y.data() + est_object.y.size());
+	// std::vector<int> passive_id_vec = est_object.passive_id;
+	std::vector<double> passive_s_vec;
+	std::vector<double> passive_y_vec;
 
+	// std::cout << est_object.passive_id.size()<<"\n";
+	
+	for (int i=0; i< est_object.passive_id.size(); i++)
+	{
+		// std::cout << est_object.passive_s[i] <<"\n";
+		std::vector<double> buffer(est_object.passive_s[i].data(), est_object.passive_s[i].data() + est_object.passive_s[i].size());
+		passive_s_vec.insert(passive_s_vec.end(), std::begin(buffer), std::end(buffer));
+		std::vector<double> buffer2(est_object.passive_y[i].data(), est_object.passive_y[i].data() + est_object.passive_y[i].size());
+		passive_y_vec.insert(passive_y_vec.end(), std::begin(buffer2), std::end(buffer2));
+
+	}
+	// std::cout << passive_s_vec.size() <<"\n";
+	EIFpairs.passive_id = est_object.passive_id;
+	EIFpairs.passive_s = passive_s_vec;
+	EIFpairs.passive_y = passive_y_vec;
 	EIFpairs.P_hat = P_hat_vec;
 	EIFpairs.X_hat = X_hat_vec;
 	EIFpairs.s = s_vec;
@@ -121,6 +139,17 @@ EIF_data eifMsg2Eigen(state_estimation::EIFpairStamped eifMsg)
 	est_object.y = Eigen::Map<Eigen::VectorXd>(eifMsg.y.data(), state_size);
 	est_object.ID = eifMsg.id;
 
+	est_object.passive_id = eifMsg.passive_id;
+	// std::cout << est_object.passive_id.size() <<"\n";
+	for (int i=0; i< est_object.passive_id.size(); i++)
+	{	
+		std::vector<double> buffer(eifMsg.passive_s.data() + i*state_size*state_size, eifMsg.passive_s.data() + state_size*state_size + i*state_size*state_size);
+		est_object.passive_s.push_back(Eigen::Map<Eigen::MatrixXd>(buffer.data(), state_size, state_size));
+		// std::cout <<est_object.passive_s[i]<<"\n\n";
+		std::vector<double> buffer2(eifMsg.passive_y.data() + i*state_size, eifMsg.passive_y.data() + state_size + i*state_size);
+		est_object.passive_y.push_back(Eigen::Map<Eigen::VectorXd>(buffer2.data(), state_size));
+	}
+	
 	return est_object;
 }
 
