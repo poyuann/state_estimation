@@ -16,7 +16,8 @@ private:
     ros::NodeHandle nh;
     ros::Subscriber bboxes_sub;
     ros::Subscriber groundTruth_sub;
-    
+    ros::Subscriber map_sub;
+
     int self_index;
     int formation_num;
     int mavNum;
@@ -27,7 +28,7 @@ private:
     =================================================================================================================================*/
     MAV* GTs;
 	std::vector<MAV_eigen> GTs_eigen;
-
+    
     int GTs_rate;
     int GTs_count;
     /*=================================================================================================================================
@@ -67,6 +68,11 @@ private:
     int no_bbox_count;
     int checkCount;
     bool gotBbox;
+    /*=================================================================================================================================
+	    map matching
+    =================================================================================================================================*/
+    Eigen::Vector3d map_measure;
+    Eigen::Vector2d map_uv;
 
 public:
     GT_measurement(ros::NodeHandle& nh_, int ID, int mavnum);
@@ -104,6 +110,12 @@ public:
     bool ifCameraMeasure();
     void bbox_check();
     Eigen::Vector3d getBboxEigen();
+    /*=================================================================================================================================
+	    map matching
+    =================================================================================================================================*/
+    void map_callback(const geometry_msgs::PoseStamped::ConstPtr& msg);
+    Eigen::Vector3d getMapMeasure();
+    Eigen::Vector2d getuv();
 };
 
 

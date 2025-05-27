@@ -8,7 +8,7 @@
         <arg name="targetTimeTol" default="0.05"/>
         <arg name="Pose_hz" default="1"/>
 
-        <group ns="$(arg vehicle)1">
+        <!-- <group ns="$(arg vehicle)1">
                 <param name="ID" value="1" />
                 <param name="stateSize" value="$(arg stateSize)"/>
                 <param name="vehicle" value="$(arg vehicle)" />
@@ -27,7 +27,7 @@
                 <param name="rate" value="$(arg rate)"/>
                 <param name="consensus" value="$(arg consensus)"/>
                 <param name="targetTimeTol" value="$(arg targetTimeTol)"/>
-                <param name="pos_est" value="false"/>
+                <param name="pos_est" value="true"/>
 +
                 <node name="synchronizer" pkg="state_estimation" type="self_msg_sync"></node>
                 <node name="state_estimation" pkg="state_estimation" type="state_estimation" output="screen"></node>
@@ -39,9 +39,21 @@
                 <param name="rate" value="$(arg rate)"/>
                 <param name="consensus" value="$(arg consensus)"/>
                 <param name="targetTimeTol" value="$(arg targetTimeTol)"/>
-                <param name="pos_est" value="false"/>
+                <param name="pos_est" value="true"/>
 
                 <node name="synchronizer" pkg="state_estimation" type="self_msg_sync"  output="screen"></node>
                 <node name="state_estimation" pkg="state_estimation" type="state_estimation" ></node>
+        </group> -->
+        <group ns="target">
+                <param name="ID" value="0" />
+                <param name="stateSize" value="$(arg stateSize)"/>
+                <param name="vehicle" value="iris" />
+                <param name="rate" value="$(arg rate)"/>
+                <param name="consensus" value="$(arg consensus)"/>
+                <param name="targetTimeTol" value="$(arg targetTimeTol)"/>
+                <param name="pos_est" value="true"/>
+
+                <!-- <node name="synchronizer" pkg="state_estimation" type="self_msg_sync"  output="screen"></node> -->
+                <node name="state_estimation" pkg="state_estimation" type="state_estimation" output="screen"></node>
         </group>
 </launch>

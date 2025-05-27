@@ -186,7 +186,7 @@ state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::Matrix
 
 	Plot_data.RMSE_p = E_p.norm();
 	Plot_data.RMSE_v = E_v.norm();
-	Plot_data.det_p = est_p.determinant();
-	Plot_data.tr_s = s.block(0, 0, 3, 3).determinant();
+	Plot_data.det_p = est_p.trace();
+	Plot_data.tr_s = s.block(0, 0, 3, 3).trace();
 	return Plot_data;
 }

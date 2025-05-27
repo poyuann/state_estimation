@@ -73,6 +73,7 @@ int main(int argc, char **argv)
 	geometry_msgs::TwistStamped target_fusedTwistMsg;
 
 	MAV mav(nh);
+    // MAV mav(nh, vehicle, ID , 0);
 	EIFpairs_ros eif_ros(nh, vehicle, ID, mavNum);
 	Camera cam(nh, true);
 	Camera cam1(nh,false);
@@ -81,56 +82,12 @@ int main(int argc, char **argv)
 	gt_m.setRosRate(rosRate);
 	MAV_eigen mav_eigen;
 	double yaw;
-	Eigen::Matrix3d R_m2p;
-	switch(ID)
-	{
-		case 1:
-			R_m2p = Eigen::AngleAxisd(-2.57088- M_PI, Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-			cam1.setCamera(R_m2p);
-
-			R_m2p = Eigen::AngleAxisd(2.57743- M_PI , Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-			cam2.setCamera(R_m2p);
-			break;
-		case 2:
-			R_m2p = Eigen::AngleAxisd(0.524555, Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-			cam1.setCamera(R_m2p);
-			
-			R_m2p = Eigen::AngleAxisd(-0.520698, Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-			cam2.setCamera(R_m2p);
-			break;
-		case 3:
-			R_m2p = Eigen::AngleAxisd(1.60857, Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-			cam1.setCamera(R_m2p);
-			
-			R_m2p = Eigen::AngleAxisd(0.603624, Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-			cam2.setCamera(R_m2p);
-			break;
-		// case 1:
-		// 	R_m2p = Eigen::AngleAxisd(3.66276 -M_PI, Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-		// 	cam1.setCamera(R_m2p);
-
-		// 	R_m2p = Eigen::AngleAxisd(2.61648 - M_PI , Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-		// 	cam2.setCamera(R_m2p);
-		// 	break;
-		// case 2:
-		// 	R_m2p = Eigen::AngleAxisd(0.524806, Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-		// 	cam1.setCamera(R_m2p);
-			
-		// 	R_m2p = Eigen::AngleAxisd(-0.522023 - M_PI, Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-		// 	cam2.setCamera(R_m2p);
-		// 	break;
-		// case 3:
-		// 	R_m2p = Eigen::AngleAxisd(0.520313, Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-		// 	cam1.setCamera(R_m2p);
-			
-		// 	R_m2p = Eigen::AngleAxisd(5.75583, Eigen::Vector3d::UnitZ()).toRotationMatrix().inverse();
-		// 	cam2.setCamera(R_m2p);
-		// 	break;
-	}
-	
+	// Eigen::Matrix3d R_m2p;
 
 	while(ros::ok())
 	{
+		std::cout<< mav.imu_init <<"\n";
+
 		if(mav.imu_init)
 				break;
 		else
@@ -155,19 +112,19 @@ int main(int argc, char **argv)
 	printf("\n[%s_%i EIF]: EIF constructed\n\n", vehicle.c_str(), ID);
 
 	SEIF_pose.setCurrState(gt_m.getGTs_eigen()[ID]);
-	if(position_estimation)
-	{
-		Eigen::MatrixXd Q(6, 6);
-		Q.block(0, 0, 3, 3) = 1e-3*Eigen::MatrixXd::Identity(3, 3); // position
-    	Q.block(3, 3, 3, 3) = 8e-2*Eigen::MatrixXd::Identity(3, 3); // velocity
-		SEIF_pose.set_process_noise(Q);
-	}
+	// if(position_estimation)
+	// {
+	// 	Eigen::MatrixXd Q(6, 6);
+	// 	Q.block(0, 0, 3, 3) = 1e-3*Eigen::MatrixXd::Identity(3, 3); // position
+    // 	Q.block(3, 3, 3, 3) = 8e-2*Eigen::MatrixXd::Identity(3, 3); // velocity
+	// 	SEIF_pose.set_process_noise(Q);
+	// }
 	
 	dt = 0.001;
 	last_t = ros::Time::now().toSec();
 
 	std_msgs::Bool isTargetEst_msg;
-	
+	// position_estimation = false;
     while(ros::ok())
     {
 		mav.setOrientation(gt_m.getGTorientation(ID));
@@ -178,17 +135,25 @@ int main(int argc, char **argv)
 		// -------------------------------------Self-------------------------------------
 		SEIF_pose.setMavSelfData(mav_eigen);
 		if(position_estimation)
-			SEIF_pose.setMeasurement(gt_m.getPositionMeasurement());
+			SEIF_pose.setMeasurement(gt_m.getMapMeasure());
+			// SEIF_pose.setMapmeasurement(gt_m.getMapMeasure());
 		SEIF_pose.computePredPairs(dt);
 		eif_ros.selfPredEIFpairs_pub.publish(eigen2EifMsg(SEIF_pose.getEIFData(), ID));
 					
-		gt_m.setNeighborCam(cam1, cam2);
+	// gt_m.setNeighborCam(cam1, cam2);
 
-		SEIF_neighbors.setCamera(cam1, cam2);
-		SEIF_neighbors.setMavSelfData(mav_eigen);
-		SEIF_neighbors.setEIFpredData(SEIF_pose.getEIFData());
-		SEIF_neighbors.setmeasurements(gt_m.get_left_bbox(), gt_m.get_right_bbox());
-		SEIF_neighbors.setNeighborData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05));
+		///////////////////    Camera neighbor  ///////////////////////
+		// SEIF_neighbors.setCamera(cam1, cam2);
+		// SEIF_neighbors.setMavSelfData(mav_eigen);
+		// SEIF_neighbors.setEIFpredData(SEIF_pose.getEIFData());
+		// SEIF_neighbors.setmeasurements(gt_m.get_left_bbox(), gt_m.get_right_bbox());
+		// SEIF_neighbors.setNeighborData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05));
+
+		//////////////////     Lidar neighbor  ////////////////////////////////
+		SEIF_lidar_neighbors.setMavSelfData(mav_eigen);
+		SEIF_lidar_neighbors.setEIFpredData(SEIF_pose.getEIFData());
+		SEIF_lidar_neighbors.setLidarMeasurements(gt_m.getLidarMeasurements());
+		SEIF_lidar_neighbors.setNeighborData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05));
 		// -------------------------------------Target-------------------------------------
 		gt_m.setCamera(cam);
 
@@ -206,8 +171,7 @@ int main(int argc, char **argv)
 		 	teif.computePredPairs(dt);
 		}
 		// else
-		// {hecking for update using Github
-
+		// {
 		// 	teif.setCamera(cam);
 		// 	teif.setMavSelfData(mav_eigen); 
 		// 	teif.setMeasurement(gt_m.getCamera4target());
@@ -218,11 +182,11 @@ int main(int argc, char **argv)
 		/*=================================================================================================================================
 			Correction
 		=================================================================================================================================*/
-		
 		// -------------------------------------Self-------------------------------------
 		SEIF_pose.computeCorrPairs();
-		SEIF_neighbors.computeCorrPairs();
-		eif_ros.selfPredEIFpairs_pub.publish(eigen2EifMsg(SEIF_neighbors.getselfEIFData(), ID));
+		// SEIF_pose.computeCorrPairs(gt_m.getuv());
+		SEIF_lidar_neighbors.computeCorrPairs();
+		eif_ros.selfPredEIFpairs_pub.publish(eigen2EifMsg(SEIF_lidar_neighbors.getselfEIFData(), ID));
 		
 		// -------------------------------------Target-------------------------------------
 		////////////
@@ -242,8 +206,8 @@ int main(int argc, char **argv)
 		=================================================================================================================================*/
 		// -------------------------------------Self-------------------------------------
 		sheif.setSelfEstData(SEIF_pose.getEIFData());
-		sheif.setNeighborEstData(SEIF_neighbors.getEIFData());
-		sheif.set_passiveEstData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05), ID);
+		sheif.setNeighborEstData(SEIF_lidar_neighbors.getEIFData());
+		// sheif.set_passiveEstData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05), ID);
 
 		sheif.process();
 		SEIF_pose.setFusionPairs(sheif.getFusedCov(), sheif.getFusedState());
@@ -277,8 +241,8 @@ int main(int argc, char **argv)
 		// else 
 		// 	teif.setFusionPairs(theif.getFusedCov(), theif.getFusedState(), ros::Time::now().toSec());
 
-		std::cout << "TEIF:\n";
-		eif_ros.tgtState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[0], theif.getFusedState() , theif.getFusedCov(), gt_m.getGTorientation(ID), theif.getS()));
+		// std::cout << "TEIF:\n";
+		// eif_ros.tgtState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[0], theif.getFusedState() , theif.getFusedCov(), gt_m.getGTorientation(ID), theif.getS()));
 
 		// Eigen::MatrixXd est_p = theif.getFusedCov();
 

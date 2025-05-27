@@ -32,6 +32,10 @@ GT_measurement::GT_measurement(ros::NodeHandle& nh_, int id, int mavnum)
 	bbox_eigen_past << 320, 240, 4;
 	bbox_eigen = bbox_eigen_past;
 	gotBbox  = false;
+	/*=================================================================================================================================
+		map matching
+	=================================================================================================================================*/
+	map_sub = nh.subscribe<geometry_msgs::PoseStamped>("vsnav_pose", 2, &GT_measurement::map_callback, this);
 }
 
 GT_measurement::~GT_measurement()
@@ -383,3 +387,20 @@ void GT_measurement::bbox_check()
 }
 
 Eigen::Vector3d GT_measurement::getBboxEigen(){return bbox_eigen;}
+
+/*=================================================================================================================================
+	map matching
+=================================================================================================================================*/
+void GT_measurement::map_callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
+{
+	// if (abs(GTs_eigen[ID].r(0) - msg->pose.position.x)  < 10 && abs(GTs_eigen[ID].r(1) - msg->pose.position.y) < 10)
+	// {
+		map_measure(0) = msg->pose.position.x;
+		map_measure(1) = msg->pose.position.y;
+		map_measure(2) = msg->pose.position.z;
+	// }
+		map_uv(0) = msg->pose.orientation.z;
+		map_uv(1) = msg->pose.orientation.w;
+}
+Eigen::Vector3d GT_measurement::getMapMeasure(){return map_measure;}
+Eigen::Vector2d GT_measurement::getuv(){return map_uv;}

@@ -12,6 +12,7 @@ private:
     std::vector<Eigen::Vector4d> lidarMeasurements;
     std::vector<Eigen::Vector4d> pre_lidarMeasurements;
     int neighbor_num_curr;
+
 public:
     Self_lidar_EIF();
     ~Self_lidar_EIF();
@@ -19,6 +20,7 @@ public:
     void setLidarMeasurements(std::vector<Eigen::Vector4d> LMs);
     void setEIFpredData(EIF_data pred);
     EIF_data computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor);
+    EIF_data getselfEIFData();
     void computeCorrPairs();
     std::vector<EIF_data> getEIFData();
     void setPreMeasurement(Eigen::Vector4d LM);

@@ -13,7 +13,9 @@ public:
     ~Self_pose_EIF();
     void computePredPairs(double delta_t);
     void computeCorrPairs();
+    void computeCorrPairs(Eigen::Vector2d pixel_z);
     void setMeasurement(Eigen::Vector3d z);
+    void setMapmeasurement(Eigen::Vector2d);
     void setFusionPairs(Eigen::MatrixXd fusedP, Eigen::VectorXd fusedX);
     void setCurrState(MAV_eigen MAV);
     EIF_data getEIFData();

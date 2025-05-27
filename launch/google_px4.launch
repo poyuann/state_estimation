@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<!-- <env name="GAZEBO_MODEL_PATH" value="${GAZEBO_MODEL_PATH}:$(find 2024_final)/models"/>
+	<env name="GAZEBO_RESOURCE_PATH" value="${GAZEBO_RESOURCE_PATH}:$(find 2024_final)/models"/> -->
+	
+	<!-- Include the MAVROS node with SITL and Gazebo -->
+	<include file="$(find state_estimation)/launch/single_gazebo.launch">
+		 <arg name="world" default="$(find state_estimation)/world/static_map_plugin.world"/>
+	</include>
+
+	<!-- Our node to control  drone -->
+	<!-- <node pkg="2024_final" type="offb_node.py" name="offb_node_py" required="true" output="screen" /> -->
+
+</launch>

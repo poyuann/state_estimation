@@ -8,9 +8,14 @@ Self_lidar_EIF::Self_lidar_EIF()
     
     //////////////////////// Covariance Tuning ////////////////////////
 
-    R(0, 0) = 4e-4;
-    R(1, 1) = 2e-2;
-    R(2, 2) = 2e-2;
+    R(0, 0) = 3e-4;
+    R(1, 1) = 6e-5;
+    R(2, 2) = 6e-5;
+
+    // R(0, 0) = 3e-4;
+    // R(1, 1) = 6e-2;
+    // R(2, 2) = 6e-2;
+    
 }
 Self_lidar_EIF::~Self_lidar_EIF(){}
 
@@ -31,7 +36,7 @@ void Self_lidar_EIF::setEIFpredData(EIF_data pred)
     self = pred;
 }
 
-EIF_data Self_lidar_EIF::computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor_pred)
+EIF_data Self_lidar_EIF::computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor)
 {
     self.z = LM.segment(0, 3);
 
@@ -41,7 +46,8 @@ EIF_data Self_lidar_EIF::computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor_
     {
         Eigen::MatrixXd R_hat;
         Eigen::Matrix3d R_W2B = Mav_eigen_self.R_w2b;
-        Eigen::Vector3d r_B_hat = R_W2B*(neighbor_pred.X_hat.segment(0, 3) - self.X_hat.segment(0, 3));
+        Eigen::Vector3d r_B_hat = R_W2B*(neighbor.X_hat.segment(0, 3) - self.X_hat.segment(0, 3));
+        Eigen::MatrixXd R_hat_passive;
         
         double D = sqrt(pow(r_B_hat(0), 2) + pow(r_B_hat(1), 2) + pow(r_B_hat(2), 2));
         
@@ -51,37 +57,42 @@ EIF_data Self_lidar_EIF::computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor_
         
         ////////////////////////////////////////////////// derivative w.r.t neighbor //////////////////////////////////////////////////
         
-        neighbor_pred.H.setZero(self_measurement_size, self_state_size);
+        neighbor.H.setZero(self_measurement_size, self_state_size);
 
-        neighbor_pred.H(0, 0) = (R_W2B(0, 0)*r_B_hat(0) + R_W2B(1, 0)*r_B_hat(1) + R_W2B(2, 0)*r_B_hat(2)) / D;
-        neighbor_pred.H(0, 1) = (R_W2B(0, 1)*r_B_hat(0) + R_W2B(1, 1)*r_B_hat(1) + R_W2B(2, 1)*r_B_hat(2)) / D;
-        neighbor_pred.H(0, 2) = (R_W2B(0, 2)*r_B_hat(0) + R_W2B(1, 2)*r_B_hat(1) + R_W2B(2, 2)*r_B_hat(2)) / D;
+        neighbor.H(0, 0) = (R_W2B(0, 0)*r_B_hat(0) + R_W2B(1, 0)*r_B_hat(1) + R_W2B(2, 0)*r_B_hat(2)) / D;
+        neighbor.H(0, 1) = (R_W2B(0, 1)*r_B_hat(0) + R_W2B(1, 1)*r_B_hat(1) + R_W2B(2, 1)*r_B_hat(2)) / D;
+        neighbor.H(0, 2) = (R_W2B(0, 2)*r_B_hat(0) + R_W2B(1, 2)*r_B_hat(1) + R_W2B(2, 2)*r_B_hat(2)) / D;
         
-        neighbor_pred.H(1, 0) = (R_W2B(0, 0)*r_B_hat(0)*r_B_hat(2)
+        neighbor.H(1, 0) = (R_W2B(0, 0)*r_B_hat(0)*r_B_hat(2)
                                 + R_W2B(1, 0)*r_B_hat(1)*r_B_hat(2)
                                 - R_W2B(2, 0)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
                                 /(D*D * sqrt(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)));
-        neighbor_pred.H(1, 1) = (R_W2B(0, 1)*r_B_hat(0)*r_B_hat(2)
+        neighbor.H(1, 1) = (R_W2B(0, 1)*r_B_hat(0)*r_B_hat(2)
                                 + R_W2B(1, 1)*r_B_hat(1)*r_B_hat(2)
                                 - R_W2B(2, 1)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
                                 /(D*D * sqrt(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)));
-        neighbor_pred.H(1, 2) = (R_W2B(0, 2)*r_B_hat(0)*r_B_hat(2)
+        neighbor.H(1, 2) = (R_W2B(0, 2)*r_B_hat(0)*r_B_hat(2)
                                 + R_W2B(1, 2)*r_B_hat(1)*r_B_hat(2)
                                 - R_W2B(2, 2)*(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)))
                                 /(D*D * sqrt(r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1)));
 
-        neighbor_pred.H(2, 0) = (-R_W2B(0, 0)*r_B_hat(1) + R_W2B(1, 0)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
-        neighbor_pred.H(2, 1) = (-R_W2B(0, 1)*r_B_hat(1) + R_W2B(1, 1)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
-        neighbor_pred.H(2, 2) = (-R_W2B(0, 2)*r_B_hat(1) + R_W2B(1, 2)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
+        neighbor.H(2, 0) = (-R_W2B(0, 0)*r_B_hat(1) + R_W2B(1, 0)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
+        neighbor.H(2, 1) = (-R_W2B(0, 1)*r_B_hat(1) + R_W2B(1, 1)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
+        neighbor.H(2, 2) = (-R_W2B(0, 2)*r_B_hat(1) + R_W2B(1, 2)*r_B_hat(0)) / (r_B_hat(0)*r_B_hat(0) + r_B_hat(1)*r_B_hat(1));
 
         ////////////////////////////////////////////////// derivative w.r.t self //////////////////////////////////////////////////
-        self.H = -neighbor_pred.H;
-        
+        self.H = -neighbor.H;
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        R_hat = R + neighbor_pred.H*neighbor_pred.P_hat*neighbor_pred.H.transpose();
+        R_hat = R + neighbor.H*neighbor.P_hat*neighbor.H.transpose();
 
         self.s = self.H.transpose()*R_hat.inverse()*self.H;
         self.y = self.H.transpose()*R_hat.inverse()*(self.z - self.h + self.H*self.X_hat);
+
+        // R_hat_passive = R + self.H*self.P_hat.inverse()*self.H.transpose();
+        // self.passive_s.push_back(neighbor.H.transpose()*R_hat_passive.inverse()*neighbor.H);
+        // self.passive_y.push_back(neighbor.H.transpose()*R_hat_passive.inverse()*(self.z - self.h + neighbor.H*neighbor.X_hat));
+
+        // self.passive_id.push_back(neighbor.ID);
     }
     setPreMeasurement(LM);
     return self;
@@ -101,6 +112,8 @@ void Self_lidar_EIF::computeCorrPairs()
             }
     }
 }
+
+EIF_data Self_lidar_EIF::getselfEIFData(){return self;}
 
 std::vector<EIF_data> Self_lidar_EIF::getEIFData(){ return selfWRTneighbors;}
 
