@@ -17,6 +17,7 @@ private:
     ros::Subscriber bboxes_sub;
     ros::Subscriber groundTruth_sub;
     ros::Subscriber map_sub;
+    std::vector<ros::Subscriber> groundTruth_subs; // Vector of subscribers for each MAV
 
     int self_index;
     int formation_num;
@@ -73,6 +74,8 @@ private:
     =================================================================================================================================*/
     Eigen::Vector3d map_measure;
     Eigen::Vector2d map_uv;
+    // Eigen::Vector3d altitude_measure;
+    double altitude_measure;
 
 public:
     GT_measurement(ros::NodeHandle& nh_, int ID, int mavnum);
@@ -81,7 +84,8 @@ public:
     /*=================================================================================================================================
         groundtruth
     =================================================================================================================================*/
-    void groundTruth_cb(const gazebo_msgs::ModelStates::ConstPtr& msg);
+    void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
+    void groundTruth_cb(const geometry_msgs::PoseStamped::ConstPtr& msg, int mav_index);
     std::vector<MAV_eigen> getGTs_eigen();
     geometry_msgs::Quaternion getGTorientation(int ID);
 

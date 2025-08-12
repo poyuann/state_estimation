@@ -4,7 +4,7 @@ MAV::MAV(){}
 MAV::MAV(ros::NodeHandle &nh_)
 {
     nh = nh_;
-
+    cout << "MAV::MAV: Initializing MAV with default constructor" << endl;
     pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("mavros/vision_pose/pose", 10, &MAV::pose_cb, this);
     vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>("mavros/vision_pose/twist", 10, &MAV::vel_cb, this);
     imu_sub = nh_.subscribe<sensor_msgs::Imu>("mavros/imu/data", 10, &MAV::imu_cb, this);
@@ -17,22 +17,26 @@ MAV::MAV(ros::NodeHandle &nh_, string vehicle, int ID)
     id = ID;
     roll = pitch = yaw = 0;
     topic_count = 0;
+    cout << "MAV::MAV: Initializing MAV with vehicle: " << vehicle << " and ID: " << ID << endl;
+    pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose_initialized", 10, &MAV::pose_cb, this);
+    // vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>(string("/mavros/local_position/twist"), 10, &MAV::vel_cb, this);
+    imu_sub = nh_.subscribe<sensor_msgs::Imu>("mavros/imu/data", 10, &MAV::imu_cb, this);
 
-    string prefix = string("/") + vehicle + string("_") + to_string(ID);
-    if(id != 0)
-    {
-        pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>(prefix + string("/mavros/local_position/pose"), 10, &MAV::pose_cb, this);
-        vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>(prefix + string("/mavros/local_position/twist"), 10, &MAV::vel_cb, this);
-        imu_sub = nh_.subscribe<sensor_msgs::Imu>(prefix + string("/mavros/imu/data"), 10, &MAV::imu_cb, this);
-    }
-    else
-    {
-        // pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("/leader/formation/pose", 10, &MAV::pose_cb, this);
-        // vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>("/leader/formation/velocity", 10, &MAV::vel_cb, this);
-        pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("/target/mavros/local_position/pose", 10, &MAV::pose_cb, this);
-        vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>("/target/mavros/local_position/velocity_local", 10, &MAV::vel_cb, this);
-    }
-    mav_state_sub = nh_.subscribe<mavros_msgs::State>("mavros/state", 10, &MAV::mav_state_cb, this);
+    // string prefix = string("/") + vehicle + string("_") + to_string(ID);
+    // if(id != 0)
+    // {
+    //     pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>(prefix + string("/mavros/local_position/pose"), 10, &MAV::pose_cb, this);
+    //     vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>(prefix + string("/mavros/local_position/twist"), 10, &MAV::vel_cb, this);
+    //     imu_sub = nh_.subscribe<sensor_msgs::Imu>(prefix + string("/mavros/imu/data"), 10, &MAV::imu_cb, this);
+    // }
+    // else
+    // {
+    //     // pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("/leader/formation/pose", 10, &MAV::pose_cb, this);
+    //     // vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>("/leader/formation/velocity", 10, &MAV::vel_cb, this);
+    //     pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("/target/mavros/local_position/pose", 10, &MAV::pose_cb, this);
+    //     vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>("/target/mavros/local_position/velocity_local", 10, &MAV::vel_cb, this);
+    // }
+    // mav_state_sub = nh_.subscribe<mavros_msgs::State>("mavros/state", 10, &MAV::mav_state_cb, this);
 }
 MAV::MAV(ros::NodeHandle &nh_, string vehicle, int ID, int empty)
 {
@@ -97,6 +101,7 @@ void MAV::imu_cb(const sensor_msgs::Imu::ConstPtr& msg)
     pose_current.pose.orientation = imu_current.orientation;
     vel_current.twist.angular = imu_current.angular_velocity;
     acc_current = imu_current.linear_acceleration;
+    ROS_INFO("imu: %f, %f, %f", acc_current.x, acc_current.y, acc_current.z);
 }
 
 sensor_msgs::Imu MAV::getImu(){return imu_current;}

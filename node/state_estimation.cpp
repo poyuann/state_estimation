@@ -41,11 +41,11 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "state_estimation");
     ros::NodeHandle nh;
 
-	ros::Publisher mavros_fusionPose_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/vision_pose/pose", 10);
-	ros::Publisher mavros_fusionTwist_pub = nh.advertise<geometry_msgs::TwistStamped>("mavros/vision_pose/twist", 10);
-	ros::Publisher target_fusionPose_pub = nh.advertise<geometry_msgs::PoseStamped>("THEIF/pose", 10);
-	ros::Publisher target_fusionTwist_pub = nh.advertise<geometry_msgs::TwistStamped>("THEIF/twist", 10);
-	ros::Publisher isTargetEst_pub = nh.advertise<std_msgs::Bool>("THEIF/isTargetEst", 10);
+	// ros::Publisher mavros_fusionPose_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/vision_pose/pose", 10);
+	// ros::Publisher mavros_fusionTwist_pub = nh.advertise<geometry_msgs::TwistStamped>("mavros/vision_pose/twist", 10);
+	// ros::Publisher target_fusionPose_pub = nh.advertise<geometry_msgs::PoseStamped>("THEIF/pose", 10);
+	// ros::Publisher target_fusionTwist_pub = nh.advertise<geometry_msgs::TwistStamped>("THEIF/twist", 10);
+	// ros::Publisher isTargetEst_pub = nh.advertise<std_msgs::Bool>("THEIF/isTargetEst", 10);
 
     std::string vehicle;
     bool consensus = false;
@@ -57,6 +57,7 @@ int main(int argc, char **argv)
 	double targetTimeTol = 0.05;
 	double last_t;
 	double dt;
+	ros::param::get("mavNum", mavNum);
     ros::param::get("vehicle", vehicle);
 	ros::param::get("ID", ID);
     ros::param::get("rate", rosRate);
@@ -72,18 +73,16 @@ int main(int argc, char **argv)
 	geometry_msgs::PoseStamped target_fusedPoseMsg;
 	geometry_msgs::TwistStamped target_fusedTwistMsg;
 
-	MAV mav(nh);
-    // MAV mav(nh, vehicle, ID , 0);
+	// MAV mav(nh);
+    MAV mav(nh, vehicle, ID);
 	EIFpairs_ros eif_ros(nh, vehicle, ID, mavNum);
 	Camera cam(nh, true);
-	Camera cam1(nh,false);
-	Camera cam2(nh,false);
-	GT_measurement gt_m(nh, ID, 4);
+	// Camera cam1(nh,false);
+	// Camera cam2(nh,false);
+	GT_measurement gt_m(nh, ID, mavNum);
 	gt_m.setRosRate(rosRate);
 	MAV_eigen mav_eigen;
-	double yaw;
-	// Eigen::Matrix3d R_m2p;
-
+	
 	while(ros::ok())
 	{
 		std::cout<< mav.imu_init <<"\n";
@@ -98,6 +97,7 @@ int main(int argc, char **argv)
 	printf("\n[%s_%i EIF]: Topic checked\n", vehicle.c_str(), ID);
 	for(int i=0; i< 20; i++)
 	{
+		std::cout << "Waiting for GT measurement..." << std::endl;
 		rate.sleep();
 		ros::spinOnce();
 	}
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
 	HEIF_target theif(6);
 
 	printf("\n[%s_%i EIF]: EIF constructed\n\n", vehicle.c_str(), ID);
-
+	std::cout << "ID: " << gt_m.getGTs_eigen()[ID].r << "\n";
 	SEIF_pose.setCurrState(gt_m.getGTs_eigen()[ID]);
 	// if(position_estimation)
 	// {
@@ -207,7 +207,7 @@ int main(int argc, char **argv)
 		// -------------------------------------Self-------------------------------------
 		sheif.setSelfEstData(SEIF_pose.getEIFData());
 		sheif.setNeighborEstData(SEIF_lidar_neighbors.getEIFData());
-		// sheif.set_passiveEstData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05), ID);
+		sheif.set_passiveEstData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05), ID);
 
 		sheif.process();
 		SEIF_pose.setFusionPairs(sheif.getFusedCov(), sheif.getFusedState());
@@ -289,11 +289,11 @@ int main(int argc, char **argv)
 		isTargetEst_msg.data = gt_m.ifCameraMeasure();
 		// -------------------------------------debug-----------------------------------------
 		// -------------------------------------Publish-------------------------------------
-		mavros_fusionPose_pub.publish(self_fusedPoseMsg);
-		mavros_fusionTwist_pub.publish(self_fusedTwistMsg);
-		target_fusionPose_pub.publish(target_fusedPoseMsg);
-		target_fusionTwist_pub.publish(target_fusedTwistMsg);
-		isTargetEst_pub.publish(isTargetEst_msg);
+		// mavros_fusionPose_pub.publish(self_fusedPoseMsg);
+		// mavros_fusionTwist_pub.publish(self_fusedTwistMsg);
+		// target_fusionPose_pub.publish(target_fusedPoseMsg);
+		// target_fusionTwist_pub.publish(target_fusedTwistMsg);
+		// isTargetEst_pub.publish(isTargetEst_msg);
 
 		/*=================================================================================================================================
 			Descrete time

@@ -8,8 +8,8 @@ Self_pose_EIF::Self_pose_EIF()
     measurement.setZero();
     //////////////////////// Covariance Tuning ////////////////////////
 
-    R = 8e-1*Eigen::MatrixXd::Identity(self_measurement_size, self_measurement_size);
-    R(2,2) = 1e-4;
+    R = 8e-0*Eigen::MatrixXd::Identity(self_measurement_size, self_measurement_size);
+    R(2,2) = 1e-0;
 }
 Self_pose_EIF::~Self_pose_EIF(){}
 
@@ -27,7 +27,7 @@ void Self_pose_EIF::computePredPairs(double delta_t)
     double dt = static_cast<double>(delta_t);
     // double dt = 0.001;
     Eigen::Vector3d world_a = Mav_eigen_self.R_w2b.inverse()*Mav_eigen_self.a_imu; 
-    world_a(2) += -9.80665;
+    // world_a(2) += -9.80665;
 
     self.F.setIdentity();
     self.F.block(0, 3, 3, 3) = Eigen::Matrix3d::Identity(3, 3)*dt;
@@ -35,6 +35,7 @@ void Self_pose_EIF::computePredPairs(double delta_t)
     // u.segment(0, 3) = 1/2*dt*dt*world_a;
     u.segment(0, 3) = u.segment(3, 3)* dt; 
     u.segment(3, 3) = world_a*dt;
+    ROS_INFO("imu acceleration: %f, %f, %f", world_a(0), world_a(1), world_a(2));
     self.X_hat = self.F*self.X + u;
 
     self.P_hat = self.F*self.P*self.F.transpose() + Q;
@@ -51,7 +52,7 @@ void Self_pose_EIF::computeCorrPairs()
     if(self.z != self.pre_z)
     {
         self.h = self.X_hat.segment(0, 3);
-        self.H.block(0, 0, 3, 3).setIdentity();
+        self.H.block(0, 0, 2, 2).setIdentity();
 
         self.s = self.H.transpose()*R.inverse()*self.H;
         self.y = self.H.transpose()*R.inverse()*(self.z - self.h + self.H*self.X_hat);

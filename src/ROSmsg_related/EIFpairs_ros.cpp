@@ -3,7 +3,7 @@
 EIFpairs_ros::EIFpairs_ros(ros::NodeHandle &nh, string vehicle, int ID, int mavnum)
 {
 	self_id = ID;
-	self_index = ID-1;
+	self_index = ID;
 	mavNum = mavnum;
 	set_topic(vehicle, self_id);
 
@@ -49,7 +49,17 @@ EIFpairs_ros::~EIFpairs_ros()
 
 void EIFpairs_ros::set_topic(std::string vehicle, int id)
 {
-	string prefix = std::string("/") + vehicle + std::string("_") + std::to_string(id);
+	string prefix = std::string("/") + vehicle + std::to_string(id);
+	if (id == 0)
+	{
+		prefix = "/MAV1";
+	}else if (id == 1)
+	{
+		prefix = "/MAV2";
+	}else if (id == 2)
+	{
+		prefix = "/MAV6";
+	}
 	self2TgtEIFpairs_pub_topic = prefix + std::string("/TEIF/fusionPairs");
 	tgtStatePlot_topic = prefix  + std::string("/THEIF/Plot");
 	selfStatePlot_topic = prefix + std::string("/SHEIF/Plot");
@@ -60,7 +70,16 @@ void EIFpairs_ros::set_topic(std::string vehicle, int id)
 	for(int i=0; i<mavNum; i++)
 		if(i != self_index)
 		{
-			prefix = std::string("/") + vehicle + std::string("_") + std::to_string(i+1);
+			if (id == 0)
+			{
+				prefix = "/MAV1";
+			}else if (id == 1)
+			{
+				prefix = "/MAV2";
+			}else if (id == 2)
+			{
+				prefix = "/MAV6";
+			}
 			neighborsEIFpairs_sub_topic[i] = prefix + std::string("/SEIF_pred/fusionPairs");
 			rbs2TgtEIFpairs_sub_topic[i] = prefix + std::string("/TEIF/fusionPairs");
 		}
@@ -79,13 +98,13 @@ std::vector<EIF_data> EIFpairs_ros::get_curr_fusing_data(state_estimation::EIFpa
 
 void EIFpairs_ros::neighborsEIFpair_cb(const state_estimation::EIFpairStamped::ConstPtr& msg)
 {
-	int index = msg->id-1;
+	int index = msg->id;
 	neighborsEIFpairs[index] = *msg;
 }
 
 void EIFpairs_ros::rbs2TgtEIFpair_cb(const state_estimation::EIFpairStamped::ConstPtr& msg)
 {
-	int index = msg->id-1;
+	int index = msg->id;
 	rbs2Tgt_EIFPairs[index] = *msg;
 }
 
@@ -184,7 +203,7 @@ state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::Matrix
 	Plot_data.est_twist.linear.y = est(4);
 	Plot_data.est_twist.linear.z = est(5);
 
-	Plot_data.RMSE_p = E_p.norm();
+	Plot_data.RMSE_p = E_p.segment(0, 2).norm();
 	Plot_data.RMSE_v = E_v.norm();
 	Plot_data.det_p = est_p.trace();
 	Plot_data.tr_s = s.block(0, 0, 3, 3).trace();
