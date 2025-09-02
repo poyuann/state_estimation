@@ -218,6 +218,19 @@ target_link_libraries(self_msg_sync
 target_include_directories(self_msg_sync PRIVATE
   include/${PROJECT_NAME}/ ) 
 
+# single_est
+add_executable(single_est 
+  node/single_estimated.cpp
+  )
+target_link_libraries(single_est
+  Mav
+  GT_measurement_ros
+  EIFpairs_ros
+  EIF
+  ${catkin_LIBRARIES} )
+target_include_directories(single_est PRIVATE
+  include/${PROJECT_NAME}/ ) 
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure

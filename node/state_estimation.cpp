@@ -122,11 +122,12 @@ int main(int argc, char **argv)
 	
 	dt = 0.001;
 	last_t = ros::Time::now().toSec();
-
+	int vml_count = 0;
 	std_msgs::Bool isTargetEst_msg;
 	// position_estimation = false;
     while(ros::ok())
     {
+		vml_count++;
 		mav.setOrientation(gt_m.getGTorientation(ID));
 		mav_eigen = mavMsg2Eigen(mav);
 		/*=================================================================================================================================
@@ -134,7 +135,8 @@ int main(int argc, char **argv)
 		=================================================================================================================================*/
 		// -------------------------------------Self-------------------------------------
 		SEIF_pose.setMavSelfData(mav_eigen);
-		if(position_estimation)
+		// if(position_estimation)
+		if(vml_count % 50 == 0)
 			SEIF_pose.setMeasurement(gt_m.getMapMeasure());
 			// SEIF_pose.setMapmeasurement(gt_m.getMapMeasure());
 		SEIF_pose.computePredPairs(dt);

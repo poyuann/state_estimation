@@ -18,7 +18,8 @@ MAV::MAV(ros::NodeHandle &nh_, string vehicle, int ID)
     roll = pitch = yaw = 0;
     topic_count = 0;
     cout << "MAV::MAV: Initializing MAV with vehicle: " << vehicle << " and ID: " << ID << endl;
-    pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose_initialized", 10, &MAV::pose_cb, this);
+    pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, &MAV::pose_cb, this);
+    // pose_sub = nh_.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose_initialized", 10, &MAV::pose_cb, this);
     // vel_sub = nh_.subscribe<geometry_msgs::TwistStamped>(string("/mavros/local_position/twist"), 10, &MAV::vel_cb, this);
     imu_sub = nh_.subscribe<sensor_msgs::Imu>("mavros/imu/data", 10, &MAV::imu_cb, this);
 
