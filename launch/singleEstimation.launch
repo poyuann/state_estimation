@@ -9,7 +9,6 @@
         <arg name="Pose_hz" default="1"/>
         <param name="mavNum" value="1"/>
 
-        <!-- <node name="synchronizer" pkg="state_estimation" type="self_msg_sync"  output="screen"></node> -->
         <group ns="$(arg vehicle)4">
                 <param name="ID" value="2" />
                 <param name="stateSize" value="$(arg stateSize)"/>
@@ -19,7 +18,7 @@
                 <param name="targetTimeTol" value="$(arg targetTimeTol)"/>
                 <param name="pos_est" value="true"/>
 
-                <!-- <node name="synchronizer" pkg="state_estimation" type="self_msg_sync"  output="screen"></node> -->
+                <!-- <node name="mahalanobis.py" pkg="state_estimation" type="mahalanobis.py" output="screen"></node> -->
                 <node name="state_estimation" pkg="state_estimation" type="single_est" output="screen" ></node>
         </group>
 </launch>

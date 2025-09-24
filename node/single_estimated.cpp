@@ -21,7 +21,8 @@
 #include <state_estimation/Plot.h>
 #include <geometry_msgs/Quaternion.h>
 #include <geometry_msgs/Vector3.h>
-
+#include <deque>
+#include <queue>
 struct MAV_eigen
 {
     Eigen::Vector3d r;        // position
@@ -71,8 +72,12 @@ Eigen::MatrixXd R; //noise matrix
 Eigen::MatrixXd R_alt; //vision measurement noise matrix
 Eigen::VectorXd u; //input
 
+bool maha_ready;
 bool init, pose_init;
 Eigen::Vector3d gt;
+std::queue<Eigen::Vector2d> maha_buf;
+
+// Callbacks
 
 void imu_cb(const sensor_msgs::Imu::ConstPtr& msg)
 {
@@ -94,10 +99,64 @@ void imu_cb(const sensor_msgs::Imu::ConstPtr& msg)
     ).toRotationMatrix().inverse();
 
 }
+bool maha(){
+    Eigen::Vector2d maha_vec, mean;
+    Eigen::Matrix2d maha_cov;
+    double maha_dist;
+
+    maha_vec.setZero();
+    std::queue<Eigen::Vector2d> temp = maha_buf; // Copy queue
+    
+    while (!temp.empty()) {
+        maha_vec += temp.front();
+        temp.pop();
+    }
+    mean = maha_vec / maha_buf.size();
+    while (!temp.empty()) {
+        Eigen::Vector2d diff = temp.front() - mean;
+        maha_cov += diff * diff.transpose();
+        temp.pop();
+    }
+    maha_cov /= (maha_buf.size() - 1); // Sample covariance
+    // maha_cov = (maha_buf.back() - mean)*(maha_buf.back() - mean).transpose();
+    
+    // if (maha_cov.determinant() < 1e-6) {
+    //     std::cout << "Covariance matrix is singular. Cannot compute Mahalanobis distance.\n";
+    //     return true; // If covariance is singular, skip the check
+    // }
+    
+    // maha_dist = std::sqrt((maha_buf.back() - mean).transpose() * maha_cov.inverse() * (maha_buf.back() - mean));
+    maha_dist = (maha_buf.back() - mean).transpose()*self.P.block(0,0,2,2).inverse()*(maha_buf.back() - mean);
+    std::cout << "Mahalanobis distance: " << maha_dist << "\n";
+    
+    if (maha_dist > 9.21) 
+        return false;
+    else
+        return true;
+
+}
 void measurement_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
-    self.z(0) = msg->pose.position.x;
-    self.z(1) = msg->pose.position.y;
+    Eigen::Vector2d z_buf;
+    z_buf(0) = msg->pose.position.x;
+    z_buf(1) = msg->pose.position.y;
+    // self.z(0) = msg->pose.position.x;
+    // self.z(1) = msg->pose.position.y;
+
+    self.z = z_buf;
+    // maha buffer 
+    if (maha_buf.size() < 10) {
+        maha_buf.push(z_buf);
+        if(maha())
+            self.z = z_buf;
+    } else {
+        maha_buf.pop();
+        maha_buf.push(z_buf);
+        if(!maha_ready) ROS_INFO("Maha initialized");
+        maha_ready = true;
+        if(maha())
+            self.z = z_buf;
+    }
 }
 void alt_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
@@ -117,8 +176,13 @@ void gt_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
     gt(0) = msg->pose.position.x;
     gt(1) = msg->pose.position.y;
     gt(2) = msg->pose.position.z;
-    std::cout << "GT: " << gt(0) << ", " << gt(1) << ", " << gt(2) << "\n";
+    // std::cout << "GT: " << gt(0) << ", " << gt(1) << ", " << gt(2) << "\n";
 }
+
+//     mahan distance
+
+
+//     EIF Functions
 
 void process(double delta_t){
 
@@ -158,7 +222,7 @@ void computeCorrPair(Eigen::Vector2d z, Eigen::VectorXd z_alt){
 
     if(self.z != self.pre_z)
     {
-        std::cout << "Measurement received\n";
+        // std::cout << "Measurement received\n";
         self.h = self.X_hat.segment(0, 2);
         self.H.block(0, 0, 2, 2).setIdentity();
         self.s = self.H.transpose()*R.inverse()*self.H;
@@ -170,6 +234,8 @@ void computeCorrPair(Eigen::Vector2d z, Eigen::VectorXd z_alt){
     self.pre_z = self.z;
     self.pre_z_alt = self.z_alt;
 }
+
+//      Plotting and Evaluation
 
 double rmse(){
     static Eigen::Vector3d rmse_sum;
@@ -195,6 +261,7 @@ int main(int argc, char **argv){
     double last_t, dt;
     init = false;
     pose_init = false;
+    maha_ready = false;
     ros::param::get("mavNum", mavNum);
     ros::param::get("vehicle", vehicle);
     ros::param::get("consensus", consensus);
@@ -206,13 +273,17 @@ int main(int argc, char **argv){
 
 
 
-    ros::Subscriber vision_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/vision_pose/pose", 10, &measurement_cb);
+    // ros::Subscriber vision_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/vision_pose/pose", 10, &measurement_cb);
+    ros::Subscriber vision_pose_sub = nh.subscribe<geometry_msgs::PoseStamped>("/vml_maha/pose", 10, &measurement_cb);
     ros::Subscriber imu_sub = nh.subscribe<sensor_msgs::Imu>("mavros/imu/data", 10, &imu_cb);
     ros::Subscriber alt_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 10, &alt_cb);
     ros::Subscriber gt_sub = nh.subscribe<geometry_msgs::PoseStamped>("/MAV2/mavros/local_position/pose_initialized", 10, &gt_cb);
-    ros::Publisher fusedPose_pub = nh.advertise<geometry_msgs::PoseStamped>("singleEst/pose", 10);
+    // ros::Publisher fusedPose_pub = nh.advertise<geometry_msgs::PoseStamped>("singleEst/pose", 10);
+    ros::Publisher fusedPose_pub = nh.advertise<geometry_msgs::PoseStamped>("mavros/vision_pose/pose", 10);
     ros::Publisher fusedTwist_pub = nh.advertise<geometry_msgs::TwistStamped>("singleEst/twist", 10);
     ros::Publisher rmse_pub = nh.advertise<std_msgs::Float64MultiArray>("singleEst/rmse", 10);
+    
+    // Initializations
     self.F.setZero(state_size, state_size);
     self.X.setZero(state_size);
     self.X_hat.setZero(state_size);
@@ -224,7 +295,7 @@ int main(int argc, char **argv){
     self.pre_z_alt.setZero(1);
     u.setZero(state_size);
     self.P = 1e1*Eigen::MatrixXd::Identity(state_size, state_size);
-    
+    // z_buf.setZero(2);
 
 
     self.h.setZero(2);
@@ -237,12 +308,15 @@ int main(int argc, char **argv){
     self.y_alt.setZero(state_size);
 
 
+    maha_buf = std::queue<Eigen::Vector2d>(); // reset buffer
+    //  noise matrix
+
     Q = 1e-3*Eigen::MatrixXd::Identity(6, 6); // process noise
     // Q.block(0, 0, 3, 3) = 1e-4*Eigen::MatrixXd::Identity(3, 3); // position
     Q.block(3, 3, 3, 3) = 8e-2*Eigen::MatrixXd::Identity(3, 3); // velocity
     R = 4e2*Eigen::MatrixXd::Identity(2, 2); // measurement noise
     R_alt = 1*Eigen::MatrixXd::Identity(1, 1); // measurement noise
-    self.P = Eigen::MatrixXd::Identity(state_size, state_size);
+    self.P = Eigen::MatrixXd::Identity(state_size, state_size);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 Eigen::MatrixXd::Identity(state_size, state_size);
     self.P_hat = Eigen::MatrixXd::Identity(state_size, state_size);
 
     while(ros::ok() && !init ){
@@ -270,9 +344,18 @@ int main(int argc, char **argv){
         
         
         last_t = ros::Time::now().toSec();
-        std::cout << "Estimated position: " << self.X(0) << ", " << self.X(1) << ", " << self.X(2) << "\n";
-        std::cout << "RMSE : "<< rmse() <<"\n";
-
+        // std::cout << "Estimated position: " << self.X(0) << ", " << self.X(1) << ", " << self.X(2) << "\n";
+        // std::cout << "RMSE : "<< rmse() <<"\n";
+        // if (maha_buf.size() < 10) {
+        //     maha_buf.push(self.X.segment(0,2));
+        // } else {
+        //     maha_buf.pop();
+        //     maha_buf.push(self.X.segment(0,2));
+        //     if(!maha_ready) ROS_INFO("Maha initialized");
+        //     maha_ready = true;
+        //     // if(maha())
+        //         // self.z = z_buf;
+        // }
         geometry_msgs::PoseStamped fusedPoseMsg;
         geometry_msgs::TwistStamped fusedTwistMsg;
         fusedPoseMsg.header.stamp = ros::Time::now();
