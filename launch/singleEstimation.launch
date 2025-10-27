@@ -10,7 +10,7 @@
         <param name="mavNum" value="1"/>
 
         <!-- <node name="synchronizer" pkg="state_estimation" type="self_msg_sync"  output="screen"></node> -->
-        <group ns="$(arg vehicle)4">
+        <group ns="$(arg vehicle)2">
                 <param name="ID" value="2" />
                 <param name="stateSize" value="$(arg stateSize)"/>
                 <param name="vehicle" value="$(arg vehicle)" />

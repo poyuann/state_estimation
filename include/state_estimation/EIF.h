@@ -8,16 +8,29 @@ struct EIF_data
 {
     Eigen::VectorXd X; //state
 	Eigen::VectorXd X_hat;
+    Eigen::VectorXd pre_X;
 	Eigen::VectorXd xi;
 	Eigen::VectorXd xi_hat;
 	Eigen::VectorXd y;
+    Eigen::VectorXd y_alt;
+    Eigen::VectorXd y_vo;
 	Eigen::VectorXd h;
+    Eigen::VectorXd h_alt;
+	Eigen::VectorXd h_vo;
+    Eigen::VectorXd z_vo;
+    Eigen::VectorXd pre_z_vo;
     Eigen::VectorXd z;
     Eigen::VectorXd pre_z;
+    Eigen::VectorXd z_alt;
+    Eigen::VectorXd pre_z_alt;
 
     Eigen::MatrixXd s;
+    Eigen::MatrixXd s_alt;
+    Eigen::MatrixXd s_vo;
 	Eigen::MatrixXd F;
 	Eigen::MatrixXd H;
+    Eigen::MatrixXd H_alt;
+    Eigen::MatrixXd H_vo;
     Eigen::MatrixXd P;
     Eigen::MatrixXd P_hat;
     Eigen::MatrixXd Omega;
@@ -27,6 +40,8 @@ struct EIF_data
     std::vector<Eigen::VectorXd> passive_y;
     std::vector<int> passive_id;
     int ID;
+
+    Eigen::Vector3d vo_offset;
 };
 
 class EIF

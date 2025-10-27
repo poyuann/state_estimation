@@ -7,7 +7,10 @@ GT_measurement::GT_measurement(ros::NodeHandle& nh_, int id, int mavnum)
         self_index = ID;
         mavNum = mavnum;
         formation_num = mavNum;
-
+		alt_measure.resize(1);
+		vo_measure.setZero();
+		map_measure.setZero();
+		alt_measure(0) = 0.0;
         /*=================================================================================================================================
             groundtruth
         =================================================================================================================================*/
@@ -17,11 +20,15 @@ GT_measurement::GT_measurement(ros::NodeHandle& nh_, int id, int mavnum)
         
         // Subscribe to /MAVx/mavros/local_position/pose_initialized for each MAV
         groundTruth_subs.resize(mavNum);
+		gt_vel_subs.resize(mavNum);
         std::vector<std::string> topics = {"MAV1", "MAV2", "MAV6"}; // Topic names for IDs 1, 2, 3
         for (int i = 0; i < mavNum; i++) {
             std::string topic = "/" + topics[i] + "/mavros/local_position/pose_initialized";
             groundTruth_subs[i] = nh.subscribe<geometry_msgs::PoseStamped>(
                 topic, 30, boost::bind(&GT_measurement::groundTruth_cb, this, _1, i));
+			std::string vel_topic = "/" + topics[i] + "/mavros/local_position/velocity_local";
+			gt_vel_subs[i] = nh.subscribe<geometry_msgs::TwistStamped>(
+				vel_topic, 30, boost::bind(&GT_measurement::gt_vel_cb,this, _1, i));
         }
 
         /*=================================================================================================================================
@@ -33,7 +40,9 @@ GT_measurement::GT_measurement(ros::NodeHandle& nh_, int id, int mavnum)
         /*=================================================================================================================================
             map matching
         =================================================================================================================================*/
-        map_sub = nh.subscribe<geometry_msgs::PoseStamped>("vsnav_pose", 2, &GT_measurement::map_callback, this);
+        map_sub = nh.subscribe<geometry_msgs::PoseStamped>("vml_maha/pose", 2, &GT_measurement::map_callback, this);
+		vo_sub = nh.subscribe<geometry_msgs::PoseStamped>("orb_slam3/pose", 2, &GT_measurement::vo_callback, this);
+		alt_sub = nh.subscribe<geometry_msgs::PoseStamped>("mavros/local_position/pose", 2, &GT_measurement::alt_callback, this);
 }
 // GT_measurement::GT_measurement(ros::NodeHandle& nh_, int id, int mavnum)
 // {
@@ -95,17 +104,17 @@ void GT_measurement::pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
 	Mav_eigen.q.z() = GTs[ID].getPose().pose.orientation.z;
 	GTs_eigen[ID] = Mav_eigen;
 
-	static std::default_random_engine generator;
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<> dis(0, 1);//uniform distribution between 0 and 1
+	// static std::default_random_engine generator;
+	// std::random_device rd;
+	// std::mt19937 gen(rd());
+	// std::uniform_real_distribution<> dis(0, 1);//uniform distribution between 0 and 1
 	// std::cout << dis(gen) << "\n ";
 	// if(GTs_count % (GTs_rate/lidar_rate) == 0) // lidar_rate = 10hz means that we do a measurement evry 50 count 
-	double a = dis(gen);
-	if (a < 0.01)
-	{
-		altitude_measure = GTs_eigen[ID].r(2)  ; // altitude measure
-	}
+	// double a = dis(gen);
+	// if (a < 0.01)
+	// {
+	// 	altitude_measure = GTs_eigen[ID].r(2)  ; // altitude measure
+	// }
 
 	// GTs_eigen = mavsMsg2Eigen(GTs, mavNum);
 	// std::cout<< GTs_eigen.size() <<"test\n";
@@ -143,11 +152,10 @@ void GT_measurement::groundTruth_cb(const geometry_msgs::PoseStamped::ConstPtr& 
         bool all_received = true;
         for (size_t i = 0; i < received.size(); i++) {
             if (!received[i]) {
-                ROS_WARN("MAV%d has not reported yet", i + 1);
+                // ROS_WARN("MAV%d has not reported yet", i + 1);
                 all_received = false;
             }
         }
-
         if (all_received) {
             // ROS_INFO("All MAVs reported, updating GTs_eigen");
             GTs_eigen = mavsMsg2Eigen(GTs, mavNum);
@@ -155,7 +163,7 @@ void GT_measurement::groundTruth_cb(const geometry_msgs::PoseStamped::ConstPtr& 
             for (size_t i = 0; i < GTs_eigen.size(); i++) {
                 // ROS_INFO("GTs_eigen[%zu] updated for MAV%d", i, i + 1);
             }
-            std::vector<MAV_eigen> formation_eigen_GT(GTs_eigen.begin() + 1, GTs_eigen.end()); // First one is target
+            std::vector<MAV_eigen> formation_eigen_GT(GTs_eigen.begin(), GTs_eigen.end()); 
 
             // Transform from groundtruth to measurements
             static std::default_random_engine generator;
@@ -167,9 +175,9 @@ void GT_measurement::groundTruth_cb(const geometry_msgs::PoseStamped::ConstPtr& 
             if (a < 0.01) {
                 // ROS_INFO("Performing measurements for all MAVs");
                 lidarMeasurements = lidarMeasure(formation_eigen_GT, generator);
-                lidar4target = lidarmeasure4target(formation_eigen_GT, GTs_eigen[0], generator);
-                CameraModel = Camera4Neighbor(formation_eigen_GT, generator);
-                CameraModel4target = CameraMeasure4target(formation_eigen_GT, GTs_eigen[0], generator);
+                // lidar4target = lidarmeasure4target(formation_eigen_GT, GTs_eigen[0], generator);
+                // CameraModel = Camera4Neighbor(formation_eigen_GT, generator);
+                // CameraModel4target = CameraMeasure4target(formation_eigen_GT, GTs_eigen[0], generator);
                 // pinhole_model(formation_eigen_GT, generator);
             }
             if (GTs_count % (GTs_rate / position_rate) == 0) {
@@ -179,8 +187,13 @@ void GT_measurement::groundTruth_cb(const geometry_msgs::PoseStamped::ConstPtr& 
                 GTs_count = 0;
             }
         } else {
-            ROS_WARN("Not all MAVs reported, skipping GTs_eigen update");
+            // ROS_WARN("Not all MAVs reported, skipping GTs_eigen update");
         }
+}
+void GT_measurement::gt_vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg, int mav_index)
+{
+	// Store velocity for the specific MAV
+	GTs[mav_index].setTwist(msg->twist); // Assumes setTwist accepts geometry_msgs::Twist
 }
 
 std::vector<MAV_eigen> GT_measurement::getGTs_eigen(){	return GTs_eigen;}
@@ -202,7 +215,7 @@ std::vector<Eigen::Vector4d> GT_measurement::lidarMeasure(std::vector<MAV_eigen>
 		if(i != self_index)
 		{
 			r_ns_B = R_W2B*(formation_GT[i].r - formation_GT[self_index].r);
-
+			std::cout << "Relative position to neighbor ID " << i << ": " << formation_GT[i].r.transpose()<< ","<<formation_GT[self_index].r.transpose() << "\n";
 			measurement(0) = sqrt(pow(r_ns_B(0), 2) + pow(r_ns_B(1), 2) + pow(r_ns_B(2), 2));
 			measurement(1) = acos(r_ns_B(2)/measurement(0)); // theta
 			measurement(2) = atan2(r_ns_B(1), r_ns_B(0)); // phi
@@ -214,7 +227,7 @@ std::vector<Eigen::Vector4d> GT_measurement::lidarMeasure(std::vector<MAV_eigen>
 			measurement(0) += n_D(generator);
 			measurement(1) += n_theta(generator);
 			measurement(2) += n_phi(generator);
-
+			std::cout << "Lidar measurement for neighbor ID " << i << ": " << measurement.transpose() << "\n";
 			measurements.push_back(measurement);
 		}
 	}
@@ -486,15 +499,33 @@ void GT_measurement::map_callback(const geometry_msgs::PoseStamped::ConstPtr& ms
 {
 	// if (abs(GTs_eigen[ID].r(0) - msg->pose.position.x)  < 10 && abs(GTs_eigen[ID].r(1) - msg->pose.position.y) < 10)
 	// {
-	std::cout << "map matching: " << msg->pose.position.x << ", " << msg->pose.position.y << ", " << msg->pose.position.z << "\n";
+	// std::cout << "map matching: " << msg->pose.position.x << ", " << msg->pose.position.y << ", " << msg->pose.position.z << "\n";
 		map_measure(0) = msg->pose.position.x;
 		map_measure(1) = msg->pose.position.y;
-		map_measure(2) = 55;//msg->pose.position.z;
+		// map_measure(2) = 55;//msg->pose.position.z;
 	// }
 		// map_uv(0) = msg->pose.orientation.z;
 		// map_uv(1) = msg->pose.orientation.w;
 }
-Eigen::Vector3d GT_measurement::getMapMeasure(){return map_measure;}
+Eigen::Vector2d GT_measurement::getMapMeasure(){return map_measure;}
 // Eigen::Vector3d GT_measurement::getAltitudeMeasure(){return altitude_measure;}
 Eigen::Vector2d GT_measurement::getuv(){return map_uv;}
-
+/*=================================================================================================================================
+	vo matching
+=================================================================================================================================*/
+void GT_measurement::vo_callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
+{
+	// std::cout << "VO measurement: " << msg->pose.position.x << ", " << msg->pose.position.y << ", " << msg->pose.position.z << "\n";
+	vo_measure(0) = msg->pose.position.x;
+	vo_measure(1) = msg->pose.position.y;
+	vo_measure(2) = msg->pose.position.z;
+}
+Eigen::Vector3d GT_measurement::getVO(){return vo_measure;}
+/*=================================================================================================================================
+	altitude measurement
+=================================================================================================================================*/
+void GT_measurement::alt_callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
+{
+	alt_measure(0) = msg->pose.position.z;
+}
+Eigen::VectorXd GT_measurement::getAlt(){return alt_measure;}

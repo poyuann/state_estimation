@@ -70,13 +70,13 @@ void EIFpairs_ros::set_topic(std::string vehicle, int id)
 	for(int i=0; i<mavNum; i++)
 		if(i != self_index)
 		{
-			if (id == 0)
+			if (i == 0)
 			{
 				prefix = "/MAV1";
-			}else if (id == 1)
+			}else if (i == 1)
 			{
 				prefix = "/MAV2";
-			}else if (id == 2)
+			}else if (i == 2)
 			{
 				prefix = "/MAV6";
 			}
@@ -90,6 +90,7 @@ std::vector<EIF_data> EIFpairs_ros::get_curr_fusing_data(state_estimation::EIFpa
 	est_data.clear();
 	for(int i=0; i<mavNum; i++)
 	{
+		// std::cout << "Checking EIFpair from ID: " << EIFPairs[i].id << "," <<abs(EIFPairs[i].header.stamp.toSec() - ros::Time::now().toSec()) << "\n";
 		if(abs(EIFPairs[i].header.stamp.toSec() - ros::Time::now().toSec()) <= tolerance)
 			est_data.push_back(eifMsg2Eigen(EIFPairs[i]));
 	}
@@ -181,7 +182,7 @@ state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::Matrix
 
 
 	// std::cout << "State: \n" << est_p.block(0, 0, 3, 3).determinant() << "\n\n";
-	std::cout << "RMS_p: " << E_p.norm() << "\nRMS_v: " << E_v.norm() << "\n\n";
+	// std::cout << "RMS_p: " << E_p.norm() << "\nRMS_v: " << E_v.norm() << "\n\n";
 
 	Plot_data.header.stamp = ros::Time::now();
 

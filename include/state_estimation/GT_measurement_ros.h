@@ -17,8 +17,10 @@ private:
     ros::Subscriber bboxes_sub;
     ros::Subscriber groundTruth_sub;
     ros::Subscriber map_sub;
+    ros::Subscriber vo_sub;
+    ros::Subscriber alt_sub;
     std::vector<ros::Subscriber> groundTruth_subs; // Vector of subscribers for each MAV
-
+    std::vector<ros::Subscriber> gt_vel_subs;
     int self_index;
     int formation_num;
     int mavNum;
@@ -72,10 +74,16 @@ private:
     /*=================================================================================================================================
 	    map matching
     =================================================================================================================================*/
-    Eigen::Vector3d map_measure;
+    Eigen::Vector2d map_measure;
     Eigen::Vector2d map_uv;
-    // Eigen::Vector3d altitude_measure;
-    double altitude_measure;
+    /*=================================================================================================================================
+        vo matching 
+    =================================================================================================================================*/
+    Eigen::Vector3d vo_measure;
+    /*=================================================================================================================================
+        altitude callback   
+    =================================================================================================================================*/
+    Eigen::VectorXd alt_measure;
 
 public:
     GT_measurement(ros::NodeHandle& nh_, int ID, int mavnum);
@@ -86,6 +94,7 @@ public:
     =================================================================================================================================*/
     void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
     void groundTruth_cb(const geometry_msgs::PoseStamped::ConstPtr& msg, int mav_index);
+    void gt_vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg, int mav_index);
     std::vector<MAV_eigen> getGTs_eigen();
     geometry_msgs::Quaternion getGTorientation(int ID);
 
@@ -118,8 +127,18 @@ public:
 	    map matching
     =================================================================================================================================*/
     void map_callback(const geometry_msgs::PoseStamped::ConstPtr& msg);
-    Eigen::Vector3d getMapMeasure();
+    Eigen::Vector2d getMapMeasure();
     Eigen::Vector2d getuv();
+    /*=================================================================================================================================
+	    vo matching
+    =================================================================================================================================*/
+    void vo_callback(const geometry_msgs::PoseStamped::ConstPtr& msg);
+    Eigen::Vector3d getVO();;
+    /*=================================================================================================================================
+        altitude callback   
+    =================================================================================================================================*/
+    void alt_callback(const geometry_msgs::PoseStamped::ConstPtr& msg);
+    Eigen::VectorXd getAlt();
 };
 
 

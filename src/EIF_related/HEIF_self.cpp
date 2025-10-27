@@ -63,8 +63,9 @@ void HEIF_self::CI_combination()
 {
 	weightedOmega_hat += self_est.P_hat.inverse();
 	weightedXi_hat += self_est.P_hat.inverse()*self_est.X_hat;
-	weightedS += self_est.s;
-	weightedY += self_est.y;
+	// weightedS += self_est.s;
+	// weightedY += self_est.y;
+	// std::cout << "weightS" << weightedS << "\n";
 	fusedP = (weightedOmega_hat + weightedS).inverse();
 	fusedX = fusedP*(weightedXi_hat + weightedY);
 }
