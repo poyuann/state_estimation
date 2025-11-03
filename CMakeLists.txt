@@ -12,7 +12,6 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   geometry_msgs
-  yolov8_ros_msgs
   message_filters
   message_generation
   cv_bridge
@@ -83,7 +82,6 @@ find_package(OsqpEigen REQUIRED)
    DEPENDENCIES
    std_msgs
    geometry_msgs
-   yolov8_ros_msgs
  )
 
 ################################################
@@ -208,15 +206,6 @@ target_link_libraries(state_estimation
 target_include_directories(state_estimation PRIVATE
   include/${PROJECT_NAME}/ ) 
 
-# sync
-add_executable(self_msg_sync 
-  node/self_msg_sync.cpp
-  )
-target_link_libraries(self_msg_sync
-  ${catkin_LIBRARIES} 
-  )
-target_include_directories(self_msg_sync PRIVATE
-  include/${PROJECT_NAME}/ ) 
 
 # single_est
 add_executable(single_est 

@@ -4,7 +4,6 @@
 
 #include <ros/ros.h>
 #include <std_msgs/Float64MultiArray.h>
-#include <gazebo_msgs/ModelStates.h>
 #include <Eigen/Dense>
 #include <random>
 

@@ -13,7 +13,6 @@
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/Quaternion.h>
-#include <gazebo_msgs/ModelStates.h>
 #include <sensor_msgs/Imu.h>
 #include <mavros_msgs/State.h>
 #include <tf/tf.h>
@@ -49,7 +48,6 @@ public:
     MAV(ros::NodeHandle &nh);
     MAV(ros::NodeHandle &nh, string vehicle, int ID);
     MAV(ros::NodeHandle &nh, string vehicle, int ID,int empty);
-    void groundTruth_cb(const gazebo_msgs::ModelStates::ConstPtr& msg);
     void pose_cb(const geometry_msgs::PoseStamped::ConstPtr& msg);
     void vel_cb(const geometry_msgs::TwistStamped::ConstPtr& msg);
     void imu_cb(const sensor_msgs::Imu::ConstPtr& msg);

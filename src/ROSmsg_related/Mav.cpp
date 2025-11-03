@@ -40,42 +40,7 @@ MAV::MAV(ros::NodeHandle &nh_, string vehicle, int ID)
     // }
     // mav_state_sub = nh_.subscribe<mavros_msgs::State>("mavros/state", 10, &MAV::mav_state_cb, this);
 }
-MAV::MAV(ros::NodeHandle &nh_, string vehicle, int ID, int empty)
-{
-    nh = nh_;
-    pose_init = vel_init = imu_init = false;
-    id = ID;
-    roll = pitch = yaw = 0;
-    topic_count = 0;
 
-  	groundTruth_sub = nh.subscribe<gazebo_msgs::ModelStates>("/gazebo/model_states", 10, &MAV::groundTruth_cb, this);
-
-
-    mav_state_sub = nh_.subscribe<mavros_msgs::State>("mavros/state", 10, &MAV::mav_state_cb, this);
-}
-void MAV::groundTruth_cb(const gazebo_msgs::ModelStates::ConstPtr& msg)
-{
-
-	////////////////////////// get groundTruth model states and arrange their ID////////////////////
-	std::vector<string> name = msg->name;
-    string prefix =  string("typhoon_h480") + to_string(id);
-    for (int i = 0; i<name.size(); i++)
-    {
-        if(prefix == name[i])
-        {
-            setPose(msg->pose[i]);
-            setTwist(msg->twist[i]);
-            // std::cout << name[i]<<"\n"<<id <<"\n";
-
-        }
-        if(id==0 && string("iris0")== name[i])
-        {
-            setPose(msg->pose[i]);
-            setTwist(msg->twist[i]);
-        }   
-    }
-
-}
 void MAV::mav_state_cb(const mavros_msgs::State::ConstPtr& msg) 
 {
     state = *msg;
