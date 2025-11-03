@@ -190,5 +190,5 @@ void Self_pose_EIF::setCurrState(MAV_eigen MAV)
 }
 Eigen::Vector3d Self_pose_EIF::getVO()
 {
-    return self.z_vo * scale;
+    return self.z_vo * scale + vo_offset;
 }

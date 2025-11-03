@@ -215,7 +215,6 @@ std::vector<Eigen::Vector4d> GT_measurement::lidarMeasure(std::vector<MAV_eigen>
 		if(i != self_index)
 		{
 			r_ns_B = R_W2B*(formation_GT[i].r - formation_GT[self_index].r);
-			std::cout << "Relative position to neighbor ID " << i << ": " << formation_GT[i].r.transpose()<< ","<<formation_GT[self_index].r.transpose() << "\n";
 			measurement(0) = sqrt(pow(r_ns_B(0), 2) + pow(r_ns_B(1), 2) + pow(r_ns_B(2), 2));
 			measurement(1) = acos(r_ns_B(2)/measurement(0)); // theta
 			measurement(2) = atan2(r_ns_B(1), r_ns_B(0)); // phi
@@ -227,7 +226,7 @@ std::vector<Eigen::Vector4d> GT_measurement::lidarMeasure(std::vector<MAV_eigen>
 			measurement(0) += n_D(generator);
 			measurement(1) += n_theta(generator);
 			measurement(2) += n_phi(generator);
-			std::cout << "Lidar measurement for neighbor ID " << i << ": " << measurement.transpose() << "\n";
+			// std::cout << "Lidar measurement for neighbor ID " << i << ": " << measurement.transpose() << "\n";
 			measurements.push_back(measurement);
 		}
 	}
@@ -511,7 +510,7 @@ Eigen::Vector2d GT_measurement::getMapMeasure(){return map_measure;}
 // Eigen::Vector3d GT_measurement::getAltitudeMeasure(){return altitude_measure;}
 Eigen::Vector2d GT_measurement::getuv(){return map_uv;}
 /*=================================================================================================================================
-	vo matching
+	vo 
 =================================================================================================================================*/
 void GT_measurement::vo_callback(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
@@ -521,6 +520,15 @@ void GT_measurement::vo_callback(const geometry_msgs::PoseStamped::ConstPtr& msg
 	vo_measure(2) = msg->pose.position.z;
 }
 Eigen::Vector3d GT_measurement::getVO(){return vo_measure;}
+double GT_measurement::getVO_RMSEmsg(Eigen::Vector3d vo_est)
+{
+	Eigen::Vector3d vo_err;
+	vo_err(0) = vo_est(0) - GTs_eigen[self_index].r(0);
+	vo_err(1) = vo_est(1) - GTs_eigen[self_index].r(1);
+	vo_err(2) = vo_est(2) - GTs_eigen[self_index].r(2);
+	double rmse = sqrt((vo_err(0)*vo_err(0) + vo_err(1)*vo_err(1) + vo_err(2)*vo_err(2)));
+	return rmse;
+}
 /*=================================================================================================================================
 	altitude measurement
 =================================================================================================================================*/
@@ -529,3 +537,4 @@ void GT_measurement::alt_callback(const geometry_msgs::PoseStamped::ConstPtr& ms
 	alt_measure(0) = msg->pose.position.z;
 }
 Eigen::VectorXd GT_measurement::getAlt(){return alt_measure;}
+

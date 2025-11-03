@@ -45,25 +45,19 @@ EIF_data Self_lidar_EIF::computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor)
 
     self.s.setZero();
     self.y.setZero();
-    std::cout << "Lidar measurement: " << self.z.transpose() << "\n";
     if(checkPreMeasurement(LM) && isnormal(LM(0)))
     {
-        std::cout << "Lidar measurement received for neighbor ID " << LM(3) << "\n";
         Eigen::MatrixXd R_hat;
         Eigen::Matrix3d R_W2B = Mav_eigen_self.R_w2b;
         Eigen::Vector3d r_B_hat = R_W2B*(neighbor.X_hat.segment(0, 3) - self.X_hat.segment(0, 3));
         Eigen::MatrixXd R_hat_passive;
         
         double D = sqrt(pow(r_B_hat(0), 2) + pow(r_B_hat(1), 2) + pow(r_B_hat(2), 2));
-        
+
         self.h.resize(3);  // Ensure size is at least 3
         self.h(0) = D;
-        std::cout << D << "\n";
         self.h(1) = std::acos(r_B_hat(2)/D);
-        std::cout << r_B_hat(2)/D << "\n";
-        std::cout << r_B_hat(1) << "," << r_B_hat(0) << "\n";        
         self.h(2) = std::atan2(r_B_hat(1), r_B_hat(0));
-        std::cout << "exit code -6\n";
         ////////////////////////////////////////////////// derivative w.r.t neighbor //////////////////////////////////////////////////
         neighbor.H.setZero(self_measurement_size, self_state_size);
 
@@ -90,13 +84,10 @@ EIF_data Self_lidar_EIF::computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor)
 
         ////////////////////////////////////////////////// derivative w.r.t self //////////////////////////////////////////////////
         self.H = -neighbor.H;
-        std::cout << "Jacobian computed for neighbor ID: " << LM(3) << "\n";
         ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         R_hat = R + neighbor.H*neighbor.P_hat*neighbor.H.transpose();
-        std::cout << "R_hat:\n" << R_hat << "\n";
         self.s = self.H.transpose()*R_hat.inverse()*self.H;
         self.y = self.H.transpose()*R_hat.inverse()*(self.z - self.h + self.H*self.X_hat);
-        std::cout << "EIF Correction computing for neighbor ID: " << LM(3) << "\n";
         // R_hat_passive = R + self.H*self.P_hat.inverse()*self.H.transpose();
         // self.passive_s.push_back(neighbor.H.transpose()*R_hat_passive.inverse()*neighbor.H);
         // self.passive_y.push_back(neighbor.H.transpose()*R_hat_passive.inverse()*(self.z - self.h + neighbor.H*neighbor.X_hat));
@@ -104,7 +95,6 @@ EIF_data Self_lidar_EIF::computeCorrPair(Eigen::Vector4d LM, EIF_data& neighbor)
         // self.passive_id.push_back(neighbor.ID);
     }
     setPreMeasurement(LM);
-    std::cout << "EIF Correction done for neighbor ID: " << LM(3) << "\n\n";
     return self;
 }
 

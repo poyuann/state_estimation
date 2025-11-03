@@ -47,6 +47,7 @@ int main(int argc, char **argv)
 	// ros::Publisher target_fusionTwist_pub = nh.advertise<geometry_msgs::TwistStamped>("THEIF/twist", 10);
 	// ros::Publisher isTargetEst_pub = nh.advertise<std_msgs::Bool>("THEIF/isTargetEst", 10);
 	ros::Publisher vo_pub = nh.advertise<geometry_msgs::PoseStamped>("vision_odometry/pose", 10);
+	ros::Publisher vo_rmse_pub = nh.advertise<std_msgs::Float64MultiArray>("vision_odometry/rmse", 10);
 	
     std::string vehicle;
     bool consensus = false;
@@ -74,7 +75,7 @@ int main(int argc, char **argv)
 	geometry_msgs::TwistStamped self_fusedTwistMsg;
 	geometry_msgs::PoseStamped target_fusedPoseMsg;
 	geometry_msgs::TwistStamped target_fusedTwistMsg;
-
+	std_msgs::Float64MultiArray vo_rmseMsg;
 	// MAV mav(nh);
     MAV mav(nh, vehicle, ID);
 	EIFpairs_ros eif_ros(nh, vehicle, ID, mavNum);
@@ -145,7 +146,6 @@ int main(int argc, char **argv)
 		// SEIF_neighbors.setNeighborData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05));
 
 		//////////////////     Lidar neighbor  ////////////////////////////////
-		std::cout << "Lidar measurements size: " << gt_m.getLidarMeasurements().size() << "\n";
 		SEIF_lidar_neighbors.setMavSelfData(mav_eigen);
 		SEIF_lidar_neighbors.setEIFpredData(SEIF_pose.getEIFData());
 		SEIF_lidar_neighbors.setLidarMeasurements(gt_m.getLidarMeasurements());
@@ -179,11 +179,9 @@ int main(int argc, char **argv)
 			Correction
 		=================================================================================================================================*/
 		// -------------------------------------Self-------------------------------------
-		std::cout << "Self EIF Correction\n";
 		SEIF_pose.computeCorrPairs();
 		SEIF_lidar_neighbors.computeCorrPairs();
 		eif_ros.selfPredEIFpairs_pub.publish(eigen2EifMsg(SEIF_lidar_neighbors.getselfEIFData(), ID));
-		std::cout << "Lidar neighbor EIF Correction done\n";
 		// -------------------------------------Target-------------------------------------
 		////////////
 
@@ -201,7 +199,6 @@ int main(int argc, char **argv)
 			Fusion
 		=================================================================================================================================*/
 		// -------------------------------------Self-------------------------------------
-		std::cout << "Self EIF Fusion\n";
 		sheif.setSelfEstData(SEIF_pose.getEIFData());
 		sheif.setNeighborEstData(SEIF_lidar_neighbors.getEIFData());
 		sheif.set_passiveEstData(eif_ros.get_curr_fusing_data(eif_ros.neighborsEIFpairs, 0.05), ID);
@@ -209,7 +206,7 @@ int main(int argc, char **argv)
 		sheif.process();
 		SEIF_pose.setFusionPairs(sheif.getFusedCov(), sheif.getFusedState());
 		
-		// std::cout << "SEIF:\n";
+		std::cout << "SEIF:\n";
 		eif_ros.selfState_Plot_pub.publish(compare(gt_m.getGTs_eigen()[ID], sheif.getFusedState() , sheif.getFusedCov(), gt_m.getGTorientation(ID),sheif.getS()));
 		
 		// -------------------------------------Target-------------------------------------
@@ -280,11 +277,15 @@ int main(int argc, char **argv)
 		voMsg.pose.position.x = SEIF_pose.getVO()(0);
 		voMsg.pose.position.y = SEIF_pose.getVO()(1);
 		voMsg.pose.position.z = SEIF_pose.getVO()(2);
+
+		vo_rmseMsg.data.clear();
+		vo_rmseMsg.data.push_back(gt_m.getVO_RMSEmsg(SEIF_pose.getVO()));
 		// -------------------------------------Camera detect?-------------------------------------
 		isTargetEst_msg.data = gt_m.ifCameraMeasure();
 		// -------------------------------------debug-----------------------------------------
 		// -------------------------------------Publish-------------------------------------
 		vo_pub.publish(voMsg);
+		vo_rmse_pub.publish(vo_rmseMsg);
 		// mavros_fusionPose_pub.publish(self_fusedPoseMsg);
 		// mavros_fusionTwist_pub.publish(self_fusedTwistMsg);
 		// target_fusionPose_pub.publish(target_fusedPoseMsg);

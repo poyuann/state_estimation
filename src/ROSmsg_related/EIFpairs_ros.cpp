@@ -182,7 +182,7 @@ state_estimation::Plot compare(MAV_eigen GT, Eigen::VectorXd est , Eigen::Matrix
 
 
 	// std::cout << "State: \n" << est_p.block(0, 0, 3, 3).determinant() << "\n\n";
-	// std::cout << "RMS_p: " << E_p.norm() << "\nRMS_v: " << E_v.norm() << "\n\n";
+	std::cout << "RMS_p: " << E_p.norm() << "\nRMS_v: " << E_v.norm() << "\n\n";
 
 	Plot_data.header.stamp = ros::Time::now();
 

@@ -20,6 +20,6 @@
                 <param name="pos_est" value="true"/>
 
                 <!-- <node name="synchronizer" pkg="state_estimation" type="self_msg_sync"  output="screen"></node> -->
-                <node name="state_estimation" pkg="state_estimation" type="single_est" output="screen" ></node>
+                <node name="single_est" pkg="state_estimation" type="single_est" output="screen" ></node>
         </group>
 </launch>
