@@ -231,6 +231,20 @@ target_link_libraries(single_est
 target_include_directories(single_est PRIVATE
   include/${PROJECT_NAME}/ ) 
 
+
+# test_single
+add_executable(test_single 
+  node/single_test.cpp
+  )
+target_link_libraries(test_single
+  Mav
+  GT_measurement_ros
+  EIFpairs_ros
+  EIF
+  ${catkin_LIBRARIES} )
+target_include_directories(test_single PRIVATE
+  include/${PROJECT_NAME}/ ) 
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure

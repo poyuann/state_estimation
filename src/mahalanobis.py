@@ -83,7 +83,7 @@ class MahalanobisDetector:
         
         # Calculate the distance for the new data point against the historical data
         distance = calculate_mahalanobis(x=current_position, data=historical_data)
-        # print(current_position)
+        print(current_position)
         if distance is not None:
             rospy.loginfo(f"Mahalanobis Distance: {distance:.4f}")
             
@@ -95,13 +95,15 @@ class MahalanobisDetector:
                 vml_pub_msg.header = msg.header
                 vml_pub_msg.pose = msg.pose
                 self.vml_pub.publish(vml_pub_msg)
-                # rospy.loginfo(f"Published to VML topic: {vml_pub_msg}")
+                rospy.loginfo(f"Published to VML topic: {vml_pub_msg}")
+                self.data_queue.append(current_position)
+                if len(self.data_queue) >= 10:
+                    self.data_queue.popleft()  # Maintain fixed size
             else:
                 rospy.logwarn(f"Anomaly Detected! Distance {distance:.4f} > threshold {threshold}")
         
         # --- Add the new data point to the queue ---
         # The deque will automatically remove the oldest item
-        self.data_queue.append(current_position)
 
     def run(self):
         # Keep the node running

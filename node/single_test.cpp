@@ -182,7 +182,7 @@ void vo_cb(const geometry_msgs::PoseStamped::ConstPtr& msg)
     self.z_vo(2) = msg->pose.position.z;
 
     self.z_vo = self.z_vo * scale;
-    self.z_vo = self.z_vo + self.vo_offset;
+    // self.z_vo = self.z_vo + self.vo_offset;
     // std::cout << "VO received\n";
 }
 
@@ -266,10 +266,10 @@ void computeCorrPair(Eigen::Vector2d z, Eigen::VectorXd z_alt){
     }
     if(self.z_vo != self.pre_z_vo)
     {
-        self.h_vo = self.X_hat.segment(0, 3);// - self.pre_X;
+        self.h_vo = self.X_hat.segment(0, 3) - self.pre_X;
         self.H_vo.block(0, 0, 3, 3).setIdentity();
         self.s_vo = self.H_vo.transpose()*R_vo.inverse()*self.H_vo;
-        self.y_vo = self.H_vo.transpose()*R_vo.inverse()*(self.z_vo - self.h_vo + self.H_vo*self.X_hat);
+        self.y_vo = self.H_vo.transpose()*R_vo.inverse()*((self.z_vo - self.pre_z_vo) - self.h_vo + self.H_vo*self.X_hat);
         self.pre_z_vo = self.z_vo;
         self.pre_X = self.X_hat.segment(0, 3);
 	std::cout<< "build after" <<std::endl;
